@@ -1,0 +1,7 @@
+# Force LF in the working tree. forge fmt and solc expect LF; on Windows git
+# would otherwise check out CRLF, which makes every line read as modified and
+# keeps `forge fmt --check` permanently red.
+* text=auto eol=lf
+
+# Vendored dependencies: keep exactly as published, no normalization.
+lib/** -text

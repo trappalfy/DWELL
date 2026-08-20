@@ -48,11 +48,14 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
     error ClaimNotOpen();
     error InvalidProof();
     error NothingToClaim();
+    error SurplusExceeded();
+    error CannotRescueRewardToken();
 
     event MaxAllocationIncreaseSet(uint256 value);
     event RootPublished(uint64 indexed throughEpoch, bytes32 root, uint256 totalAllocated);
     event RootActivated(uint64 indexed throughEpoch, bytes32 root);
     event Claimed(address indexed account, uint256 amount, uint256 cumulative);
+    event SurplusWithdrawn(address indexed to, uint256 amount);
 
     constructor(IERC20 token, address admin, address keeper, uint256 cap) {
         if (address(token) == address(0) || admin == address(0) || keeper == address(0)) {
@@ -135,5 +138,45 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
 
         rewardToken.safeTransfer(msg.sender, amount);
         emit Claimed(msg.sender, amount, cumulativeAmount);
+    }
+
+    /// @notice Balance that is not owed to any account.
+    function surplus() public view returns (uint256) {
+        uint256 balance = rewardToken.balanceOf(address(this));
+        uint256 owed = outstanding();
+        return balance > owed ? balance - owed : 0;
+    }
+
+    function setMaxAllocationIncreasePerRoot(uint256 value) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        maxAllocationIncreasePerRoot = value;
+        emit MaxAllocationIncreaseSet(value);
+    }
+
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
+
+    /// @notice Withdraws reward tokens that exceed outstanding obligations.
+    ///         Amounts already allocated to accounts can never be taken.
+    function withdrawSurplus(address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (to == address(0)) revert ZeroAddress();
+        if (amount > surplus()) revert SurplusExceeded();
+        rewardToken.safeTransfer(to, amount);
+        emit SurplusWithdrawn(to, amount);
+    }
+
+    /// @notice Recovers tokens sent here by mistake. The reward token is
+    ///         excluded so miner entitlements can never be drained this way.
+    function rescueForeignToken(IERC20 stray, address to, uint256 amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        if (address(stray) == address(rewardToken)) revert CannotRescueRewardToken();
+        if (to == address(0)) revert ZeroAddress();
+        stray.safeTransfer(to, amount);
     }
 }

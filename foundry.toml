@@ -8,6 +8,13 @@ optimizer_runs = 200
 evm_version = "cancun"
 remappings = ["@openzeppelin/=lib/openzeppelin-contracts/"]
 
+[invariant]
+runs = 512
+depth = 500
+# Any handler revert fails the run. Without this a handler that always reverts
+# lets the invariants pass while proving nothing.
+fail_on_revert = true
+
 [profile.fork]
 eth_rpc_url = "https://rpc.mainnet.chain.robinhood.com"
 

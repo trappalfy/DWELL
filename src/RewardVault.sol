@@ -37,15 +37,22 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
 
     uint256 public maxAllocationIncreasePerRoot;
 
+    /// @notice Cumulative amount each account has already withdrawn.
+    mapping(address => uint256) public claimed;
+
     error ZeroAddress();
     error EpochNotAdvancing();
     error AllocationDecreased();
     error AllocationCapExceeded();
     error Insolvent();
+    error ClaimNotOpen();
+    error InvalidProof();
+    error NothingToClaim();
 
     event MaxAllocationIncreaseSet(uint256 value);
     event RootPublished(uint64 indexed throughEpoch, bytes32 root, uint256 totalAllocated);
     event RootActivated(uint64 indexed throughEpoch, bytes32 root);
+    event Claimed(address indexed account, uint256 amount, uint256 cumulative);
 
     constructor(IERC20 token, address admin, address keeper, uint256 cap) {
         if (address(token) == address(0) || admin == address(0) || keeper == address(0)) {
@@ -102,5 +109,31 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
         totalAllocated = newTotalAllocated;
 
         emit RootPublished(newEpoch, newRoot, newTotalAllocated);
+    }
+
+    /// @notice Claims the difference between the caller's cumulative
+    ///         entitlement in the active root and what it already claimed.
+    function claim(uint256 cumulativeAmount, bytes32[] calldata proof)
+        external
+        nonReentrant
+        whenNotPaused
+    {
+        _promoteIfDue();
+        if (activeRoot == bytes32(0)) revert ClaimNotOpen();
+
+        // The leaf is rebuilt from msg.sender, so a proof issued for one
+        // account can never be replayed by another.
+        bytes32 node = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, cumulativeAmount))));
+        if (!MerkleProof.verify(proof, activeRoot, node)) revert InvalidProof();
+
+        uint256 already = claimed[msg.sender];
+        if (cumulativeAmount <= already) revert NothingToClaim();
+
+        uint256 amount = cumulativeAmount - already;
+        claimed[msg.sender] = cumulativeAmount;
+        totalClaimed += amount;
+
+        rewardToken.safeTransfer(msg.sender, amount);
+        emit Claimed(msg.sender, amount, cumulativeAmount);
     }
 }

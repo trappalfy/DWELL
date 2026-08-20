@@ -124,3 +124,12 @@ test("пропуск эпох не завышает счёт", () => {
   epochs.markSettled(900, 1n, 1n);
   assert.equal(epochs.countSettledAfter(null), 2, "дыра от простоя не считается работой");
 });
+
+test("недоступный путь к базе называет сам путь", () => {
+  // SQLite сообщает только «unable to open database file», по которому
+  // оператор не поймёт, какой путь оказался неверным.
+  assert.throws(
+    () => openDatabase("/definitely/not/a/directory/dwell.db"),
+    /cannot open database at \/definitely\/not\/a\/directory\/dwell\.db/
+  );
+});

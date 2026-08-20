@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ADDRESSES, CHAIN_ID, POOL_FEE, SLIPPAGE_BPS, loadRuntimeConfig } from "../src/config.ts";
+import {
+  ADDRESSES,
+  CHAIN_ID,
+  POOL_FEE,
+  SLIPPAGE_BPS,
+  loadRuntimeConfig,
+  loadWorkerConfig
+} from "../src/config.ts";
 
 const VALID_ENV = {
   RPC_URL: "https://rpc.mainnet.chain.robinhood.com",
@@ -52,4 +59,53 @@ test("порт по умолчанию задан, путь к базе обяз
   assert.equal(loadRuntimeConfig(withoutPort).port, 8787);
   const { DATABASE_PATH, ...withoutDb } = VALID_ENV;
   assert.throws(() => loadRuntimeConfig(withoutDb), /DATABASE_PATH/);
+});
+
+const WORKER_ENV = {
+  ...VALID_ENV,
+  KEEPER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+};
+
+test("dry-run включён по умолчанию", () => {
+  // Забытая переменная обязана давать безопасное состояние: публикация
+  // двигает реальные деньги, поэтому включаться она должна намеренно.
+  assert.equal(loadWorkerConfig(WORKER_ENV).dryRun, true);
+  const { DRY_RUN, ...withoutFlag } = { ...WORKER_ENV, DRY_RUN: "false" };
+  assert.equal(loadWorkerConfig(withoutFlag).dryRun, true);
+});
+
+test("dry-run снимается только точной строкой false", () => {
+  assert.equal(loadWorkerConfig({ ...WORKER_ENV, DRY_RUN: "false" }).dryRun, false);
+  for (const sloppy of ["true", "0", "no", "FALSE", ""]) {
+    assert.equal(
+      loadWorkerConfig({ ...WORKER_ENV, DRY_RUN: sloppy }).dryRun,
+      true,
+      `значение ${JSON.stringify(sloppy)} не должно снимать защиту`
+    );
+  }
+});
+
+test("кривой приватный ключ отвергается без утечки значения", () => {
+  const bad = { ...WORKER_ENV, KEEPER_PRIVATE_KEY: "0xdeadbeef" };
+  assert.throws(
+    () => loadWorkerConfig(bad),
+    (error: Error) => {
+      assert.match(error.message, /KEEPER_PRIVATE_KEY/);
+      assert.ok(!error.message.includes("0xdeadbeef"), "ключ не должен попадать в текст ошибки");
+      return true;
+    }
+  );
+});
+
+test("отсутствующий ключ кипера отвергается", () => {
+  const { KEEPER_PRIVATE_KEY, ...without } = WORKER_ENV;
+  assert.throws(() => loadWorkerConfig(without), /KEEPER_PRIVATE_KEY/);
+});
+
+test("порог конвертации по умолчанию около десяти долларов", () => {
+  assert.equal(loadWorkerConfig(WORKER_ENV).conversionThreshold, 3_000_000_000_000_000n);
+  assert.equal(
+    loadWorkerConfig({ ...WORKER_ENV, CONVERSION_THRESHOLD_WEI: "5" }).conversionThreshold,
+    5n
+  );
 });

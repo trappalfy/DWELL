@@ -45,7 +45,16 @@ CREATE TABLE IF NOT EXISTS purchases (
 `;
 
 export function openDatabase(path: string): DatabaseSync {
-  const db = new DatabaseSync(path);
+  let db: DatabaseSync;
+  try {
+    db = new DatabaseSync(path);
+  } catch (error) {
+    // SQLite reports only "unable to open database file", which tells an
+    // operator nothing about which path was wrong or why.
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`cannot open database at ${path}: ${reason}`, { cause: error });
+  }
+
   // WAL lets the worker write while the API reads without blocking.
   if (path !== ":memory:") db.exec("PRAGMA journal_mode = WAL");
   db.exec("PRAGMA foreign_keys = ON");

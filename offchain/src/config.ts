@@ -64,3 +64,32 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
     port: Number(env.PORT ?? 8787)
   };
 }
+
+export interface WorkerConfig extends RuntimeConfig {
+  readonly keeperKey: string;
+  readonly dryRun: boolean;
+  readonly conversionThreshold: bigint;
+}
+
+/**
+ * Reads the worker's extra settings.
+ *
+ * dryRun defaults to TRUE. Publishing moves real value, so the safe state
+ * has to be the one you get by forgetting to set a variable — turning it
+ * off must be a deliberate act, never an accident of deployment.
+ */
+export function loadWorkerConfig(env: NodeJS.ProcessEnv): WorkerConfig {
+  const base = loadRuntimeConfig(env);
+  const key = required(env, "KEEPER_PRIVATE_KEY");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    // The value itself is never included in the message.
+    throw new Error("KEEPER_PRIVATE_KEY must be a 32-byte hex private key");
+  }
+
+  return {
+    ...base,
+    keeperKey: key,
+    dryRun: env.DRY_RUN !== "false",
+    conversionThreshold: BigInt(env.CONVERSION_THRESHOLD_WEI ?? "3000000000000000")
+  };
+}

@@ -106,4 +106,36 @@ contract RewardVaultAdminTest is Test {
         vault.publishRoot(1, bytes32(uint256(0xA1)), 1e18);
         assertEq(vault.totalAllocated(), 1e18);
     }
+
+    function test_pause_keeperMayPause() public {
+        vm.prank(keeper);
+        vault.pause();
+        assertTrue(vault.paused(), "keeper must be able to stop the protocol");
+    }
+
+    function test_pause_keeperMayNotUnpause() public {
+        vm.prank(keeper);
+        vault.pause();
+
+        vm.prank(keeper);
+        vm.expectRevert();
+        vault.unpause();
+    }
+
+    function test_pause_adminMayPauseAndUnpause() public {
+        vm.prank(admin);
+        vault.pause();
+        assertTrue(vault.paused());
+
+        vm.prank(admin);
+        vault.unpause();
+        assertFalse(vault.paused());
+    }
+
+    function test_pause_strangerMayNotPause() public {
+        address stranger = makeAddr("stranger");
+        vm.prank(stranger);
+        vm.expectRevert(RewardVault.NotPauser.selector);
+        vault.pause();
+    }
 }

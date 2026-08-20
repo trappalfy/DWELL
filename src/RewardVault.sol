@@ -50,6 +50,7 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
     error NothingToClaim();
     error SurplusExceeded();
     error CannotRescueRewardToken();
+    error NotPauser();
 
     event MaxAllocationIncreaseSet(uint256 value);
     event RootPublished(uint64 indexed throughEpoch, bytes32 root, uint256 totalAllocated);
@@ -148,7 +149,22 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
         emit MaxAllocationIncreaseSet(value);
     }
 
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    /**
+     * @notice Halts publishing and claiming.
+     * @dev Callable by the keeper as well as the admin. The watchdog runs in
+     *      the worker process holding the keeper key, and the admin key is
+     *      cold by design — if only the admin could pause, the watchdog could
+     *      do nothing but write a log line while a bad root matured.
+     *
+     *      Pausing is the fail-safe direction: it stops harm rather than
+     *      causing it. Unpausing is not, so it stays with the cold key. A
+     *      compromised keeper can therefore halt the protocol but never
+     *      restart it on its own terms.
+     */
+    function pause() external {
+        if (!hasRole(KEEPER_ROLE, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert NotPauser();
+        }
         _pause();
     }
 

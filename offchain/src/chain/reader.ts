@@ -1,4 +1,4 @@
-import { parseAbi, type PublicClient } from "viem";
+import { parseAbi, parseAbiItem, type PublicClient } from "viem";
 import { createReadClient } from "./client.ts";
 import { ADDRESSES } from "../config.ts";
 import type { Address, VaultState } from "../types.ts";
@@ -9,6 +9,18 @@ const VAULT_ABI = parseAbi([
   "function totalAllocated() view returns (uint256)",
   "function totalClaimed() view returns (uint256)"
 ]);
+
+const ROOT_PUBLISHED_EVENT = parseAbiItem(
+  "event RootPublished(uint64 indexed throughEpoch, bytes32 root, uint256 totalAllocated)"
+);
+
+/**
+ * How far back to scan for published roots. Events, unlike state, survive
+ * far beyond the node's pruning window — measured at 100k blocks against
+ * 6-8k for state — so the watchdog works after a restart and can audit
+ * history after the fact.
+ */
+const LOG_LOOKBACK_BLOCKS = 100_000n;
 
 export class ChainReader {
   readonly #client: PublicClient;
@@ -63,5 +75,31 @@ export class ChainReader {
       totalAllocated: totalAllocated as bigint,
       totalClaimed: totalClaimed as bigint
     };
+  }
+
+  async lastPublishedRoot(
+    vault: Address
+  ): Promise<{ root: string; throughEpoch: number } | null> {
+    const head = await this.currentBlock();
+    const from = head > LOG_LOOKBACK_BLOCKS ? head - LOG_LOOKBACK_BLOCKS : 0n;
+
+    const logs = await this.#client.getLogs({
+      address: vault,
+      event: ROOT_PUBLISHED_EVENT,
+      fromBlock: from,
+      toBlock: head
+    });
+
+    const latest = logs.at(-1);
+    if (!latest) return null;
+
+    return {
+      root: latest.args.root as string,
+      throughEpoch: Number(latest.args.throughEpoch)
+    };
+  }
+
+  ethBalance(account: Address): Promise<bigint> {
+    return this.#client.getBalance({ address: account });
   }
 }

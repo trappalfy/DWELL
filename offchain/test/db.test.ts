@@ -105,3 +105,22 @@ test("схема применяется повторно без ошибки", (
   const db = openDatabase(":memory:");
   assert.doesNotThrow(() => new HeartbeatStore(db));
 });
+
+test("счёт посчитанных эпох ведётся строками, а не вычитанием номеров", () => {
+  const { epochs } = fresh();
+  // Номера эпох выводятся из unix-времени и идут миллионами: разность двух
+  // номеров измеряет время, а не объём посчитанной работы.
+  epochs.markSettled(5_955_209, 1n, 1n);
+  epochs.markSettled(5_955_210, 1n, 1n);
+
+  assert.equal(epochs.countSettledAfter(null), 2, "с нуля считаются все строки");
+  assert.equal(epochs.countSettledAfter(5_955_209), 1);
+  assert.equal(epochs.countSettledAfter(5_955_210), 0);
+});
+
+test("пропуск эпох не завышает счёт", () => {
+  const { epochs } = fresh();
+  epochs.markSettled(100, 1n, 1n);
+  epochs.markSettled(900, 1n, 1n);
+  assert.equal(epochs.countSettledAfter(null), 2, "дыра от простоя не считается работой");
+});

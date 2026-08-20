@@ -58,12 +58,18 @@
 
 - [ ] **Step 1: Инициализировать Foundry**
 
+Сначала сохранить `.gitignore`: `forge init` перезаписывает его своим, а в нашем лежит защита приватных ключей.
+
 ```bash
 cd /c/Users/chaiz/Desktop/project
-forge init --no-git --no-commit --force .
-rm -rf src/Counter.sol test/Counter.t.sol script/Counter.s.sol
+cp .gitignore /tmp/dwell-gitignore.bak
+forge init --force --no-git .
+diff -q /tmp/dwell-gitignore.bak .gitignore || cp /tmp/dwell-gitignore.bak .gitignore
+rm -f src/Counter.sol test/Counter.t.sol script/Counter.s.sol README.md
 forge install OpenZeppelin/openzeppelin-contracts@v5.1.0 --no-git
 ```
+
+У `forge init` в Foundry 1.5.x нет флага `--no-commit`; поддерживаются только `--force`, `--no-git`, `--vscode`. `--no-git` на `install` вендорит зависимости обычными файлами, поэтому `lib/` коммитится и репозиторий собирается сразу после клона.
 
 - [ ] **Step 2: Записать `foundry.toml`**
 
@@ -883,18 +889,28 @@ contract VaultHandler is Test {
     }
 
     function publish(uint256 increase, uint256 timeJump) external {
+        // Read every vault value BEFORE vm.prank. Each getter is an external
+        // call, and vm.prank applies to the NEXT external call only — leaving
+        // a getter between the prank and publishRoot silently consumes it, so
+        // publishRoot arrives from the handler and reverts on AccessControl.
+        uint256 current = vault.totalAllocated();
+        uint256 claimedSoFar = vault.totalClaimed();
         uint256 cap = vault.maxAllocationIncreasePerRoot();
-        increase = bound(increase, 0, cap);
+        uint256 balance = token.balanceOf(address(vault));
 
-        uint256 headroom =
-            token.balanceOf(address(vault)) + vault.totalClaimed() - vault.totalAllocated();
+        uint256 headroom = balance + claimedSoFar - current;
+        increase = bound(increase, 0, cap);
         if (increase > headroom) increase = headroom;
 
+        uint256 target = current + increase;
         vm.warp(block.timestamp + bound(timeJump, 0, 900));
 
         epoch += 1;
+        bytes32 root = _leaf(miner, target);
+
         vm.prank(keeper);
-        vault.publishRoot(epoch, keccak256(abi.encode(epoch)), vault.totalAllocated() + increase);
+        vault.publishRoot(epoch, root, target);
+        publishes += 1;
     }
 }
 
@@ -929,8 +945,18 @@ contract RewardVaultInvariantTest is Test {
     function invariant_activeNeverAheadOfPending() public view {
         assertLe(vault.activeThroughEpoch(), vault.pendingThroughEpoch());
     }
+
+    /// Guards against a vacuous run. This is a post-condition, not an
+    /// invariant: at setup the counters are zero, so asserting it as an
+    /// invariant fails on the initial state check before any call is made.
+    function afterInvariant() public view {
+        assertGt(handler.publishes(), 0, "fuzzer never published a root");
+        assertGt(handler.claims(), 0, "fuzzer never completed a claim");
+    }
 }
 ```
+
+Полная рабочая версия файла, включая счётчики `publishes`/`claims`, поле `miner`, хелпер `_leaf` и обработчик `claim` с однолистовым деревом (root == leaf, пруф — пустой массив), лежит в репозитории по этому же пути.
 
 - [ ] **Step 2: Прогнать инварианты**
 
@@ -939,8 +965,23 @@ Expected: PASS — 3 инварианта, каждый прогнан по ум
 
 - [ ] **Step 3: Прогнать с усиленными настройками**
 
-Run: `forge test --match-path test/RewardVault.invariant.t.sol --fuzz-runs 5000`
-Expected: PASS. Если появится контрпример — это находка, а не помеха: зафиксировать последовательность вызовов в отдельный регрессионный юнит-тест и починить контракт, прежде чем идти дальше.
+`--invariant-runs` не является CLI-флагом; настройки инвариантов живут в `foundry.toml`. Добавить секцию:
+
+```toml
+[invariant]
+runs = 512
+depth = 500
+# Any handler revert fails the run. Without this a handler that always reverts
+# lets the invariants pass while proving nothing.
+fail_on_revert = true
+```
+
+Run: `forge test --match-path test/RewardVault.invariant.t.sol`
+Expected: PASS, 512 прогонов, 256 000 вызовов, `reverts: 0` в таблице.
+
+**Обязательно смотреть на колонку Reverts.** Если у селектора `publish` число откатов равно числу вызовов, инварианты зелёные вхолостую — фаззер не дошёл до проверяемого кода. Именно поэтому включён `fail_on_revert` и добавлен `afterInvariant`.
+
+Если появится контрпример — это находка, а не помеха: зафиксировать последовательность вызовов в отдельный регрессионный юнит-тест и починить контракт, прежде чем идти дальше.
 
 - [ ] **Step 4: Коммит**
 

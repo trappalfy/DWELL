@@ -12,7 +12,8 @@
     "fixture": "node scripts/generate-merkle-fixture.ts"
   },
   "dependencies": {
-    "@openzeppelin/merkle-tree": "^1.0.8"
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "viem": "^2.55.19"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

@@ -1,0 +1,37 @@
+# --- СЕКРЕТЫ: приватные ключи кипера и админа. Утечка = потеря средств ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+keystore/
+secrets/
+*.secret
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Foundry
+out/
+cache/
+broadcast/
+!broadcast/**/dry-run/
+
+# База
+*.sqlite
+*.sqlite3
+pgdata/
+
+# Редакторы и ОС
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

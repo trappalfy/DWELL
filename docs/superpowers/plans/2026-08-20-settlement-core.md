@@ -1455,7 +1455,19 @@ console.log(`entries ${fixture.count}, total cumulative ${total}`);
 Run: `cd offchain && npm run fixture`
 Expected: вывод с путём, корнем и `entries 5`. Файл `test/fixtures/merkle.json` создан.
 
-- [ ] **Step 3: Написать падающий Foundry-тест**
+- [ ] **Step 3: Разрешить Foundry чтение фикстуры**
+
+По умолчанию `vm.readFile` запрещён и тест падает с `the path ... is not allowed to be accessed for read operations`. Добавить в `foundry.toml`, в секцию `[profile.default]`:
+
+```toml
+# Scoped read access for the cross-check fixture built by the offchain package.
+# Deliberately narrow: read-only, one directory, not the whole project.
+fs_permissions = [{ access = "read", path = "./test/fixtures" }]
+```
+
+Доступ намеренно узкий: только чтение и только каталог фикстур. Выдавать тестам права на весь проект не нужно.
+
+- [ ] **Step 4: Написать падающий Foundry-тест**
 
 Файл `test/MerkleCrossCheck.t.sol`:
 
@@ -1547,7 +1559,7 @@ contract MerkleCrossCheckTest is Test {
 }
 ```
 
-- [ ] **Step 4: Убедиться, что тест падает до генерации фикстуры**
+- [ ] **Step 5: Убедиться, что тест падает до генерации фикстуры**
 
 Если фикстура уже сгенерирована на шаге 2, временно проверить обратное поведение:
 
@@ -1556,19 +1568,19 @@ Expected: FAIL — `vm.readFile` не находит файл.
 
 Затем вернуть: `mv test/fixtures/merkle.json.bak test/fixtures/merkle.json`
 
-- [ ] **Step 5: Прогнать кросс-проверку**
+- [ ] **Step 6: Прогнать кросс-проверку**
 
 Run: `forge test --match-path test/MerkleCrossCheck.t.sol -vv`
 Expected: PASS — 2 теста. Это доказывает, что дерево из TypeScript принимается контрактом побайтово.
 
 Если `test_contractAcceptsProofsBuiltOffchain` падает на `InvalidProof` — разошлись кодировки листа. Не «чинить» подгонкой контракта: сверить порядок и типы в `abi.encode` с `LEAF_ENCODING` в `offchain/src/tree.ts`.
 
-- [ ] **Step 6: Прогнать оба набора целиком**
+- [ ] **Step 7: Прогнать оба набора целиком**
 
 Run: `forge test && cd offchain && node --test`
 Expected: Foundry — 31 тест (29 прежних + 2 новых). Node — 47 тестов.
 
-- [ ] **Step 7: Коммит**
+- [ ] **Step 8: Коммит**
 
 ```bash
 git add offchain/scripts/generate-merkle-fixture.ts test/fixtures/merkle.json \

@@ -116,11 +116,7 @@ contract RewardVault is AccessControl, Pausable, ReentrancyGuard {
 
     /// @notice Claims the difference between the caller's cumulative
     ///         entitlement in the active root and what it already claimed.
-    function claim(uint256 cumulativeAmount, bytes32[] calldata proof)
-        external
-        nonReentrant
-        whenNotPaused
-    {
+    function claim(uint256 cumulativeAmount, bytes32[] calldata proof) external nonReentrant whenNotPaused {
         _promoteIfDue();
         if (activeRoot == bytes32(0)) revert ClaimNotOpen();
 

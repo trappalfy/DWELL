@@ -15,6 +15,7 @@
     "@openzeppelin/merkle-tree": "^1.0.8"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "typescript": "^5.7.0"
   }
 }

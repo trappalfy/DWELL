@@ -92,10 +92,13 @@ Foundry уже владеет `src/`, `test/`, `script/`, поэтому офч�
     "@openzeppelin/merkle-tree": "^1.0.8"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "typescript": "^5.7.0"
   }
 }
 ```
+
+`@types/node` обязателен: `tsconfig` объявляет `"types": ["node"]`, и без пакета `tsc` падает с `TS2688`, хотя тесты при этом проходят — Node исполняет TypeScript, не проверяя типы.
 
 - [ ] **Step 2: Создать конфиг TypeScript и локальный .gitignore**
 

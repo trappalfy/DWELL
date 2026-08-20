@@ -1,0 +1,48 @@
+{
+  "root": "0x965b5c74843a28f2ee05d07c0d2061c9735cbd22dbc926c0c193a699eb4406e2",
+  "count": 5,
+  "entries": [
+    {
+      "account": "0x0000000000000000000000000000000000000101",
+      "cumulative": "0x3782dace9d900000",
+      "proof": [
+        "0xd2a3e106ace73e702f241dd67b49d088a8c4fe5b60b1f6f3fcf3647457804695",
+        "0xaeb5068c38cdfefa33b1b50567838f5dc4394023cc32ee47bc6ba092c1de4727"
+      ]
+    },
+    {
+      "account": "0x0000000000000000000000000000000000000202",
+      "cumulative": "0xde0b6b3a7640000",
+      "proof": [
+        "0x09e4be3d679aa5dba869048840ec814f690d3a53c8aefc088428ee98b1b438cf",
+        "0xf98212ab5129d20f0e07f209ea7dd765c3d699830a08874c3d70b92c5e85c863",
+        "0xaeb5068c38cdfefa33b1b50567838f5dc4394023cc32ee47bc6ba092c1de4727"
+      ]
+    },
+    {
+      "account": "0x0000000000000000000000000000000000000303",
+      "cumulative": "0x3782dace9d90000",
+      "proof": [
+        "0x0c880b3b3242f87767cb40703b566360c8aead6ae9dfb6f754556e655f8dd179",
+        "0xf98212ab5129d20f0e07f209ea7dd765c3d699830a08874c3d70b92c5e85c863",
+        "0xaeb5068c38cdfefa33b1b50567838f5dc4394023cc32ee47bc6ba092c1de4727"
+      ]
+    },
+    {
+      "account": "0x0000000000000000000000000000000000000404",
+      "cumulative": "0x1",
+      "proof": [
+        "0x95d41e6b8db032c1c40c7adcfb738431ba2fe5ca52540228365e733a87447b68",
+        "0xc03d896e4e93213a42d128a767e57fdc82ec0934c75181428cfaa72507c730df"
+      ]
+    },
+    {
+      "account": "0x0000000000000000000000000000000000000505",
+      "cumulative": "0x1b69b4be052fab1",
+      "proof": [
+        "0x81fcf35ead977222ccd470c82761e039b296e05995cd9094f6d90f6e13baee6e",
+        "0xc03d896e4e93213a42d128a767e57fdc82ec0934c75181428cfaa72507c730df"
+      ]
+    }
+  ]
+}

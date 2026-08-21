@@ -13,6 +13,10 @@ const CONTENT_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".woff2": "font/woff2",
+  // Pixel faces ship as TrueType and weigh single-digit kilobytes, so the
+  // conversion to woff2 would buy nothing and cost a build step.
+  ".ttf": "font/ttf",
+  ".otf": "font/otf",
   ".ico": "image/x-icon",
   ".json": "application/json; charset=utf-8"
 };

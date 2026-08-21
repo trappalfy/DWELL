@@ -5,3 +5,9 @@
 
 # Vendored dependencies: keep exactly as published, no normalization.
 lib/** -text
+
+# Self-hosted fonts: binary, never line-ending normalized. `text=auto` guesses
+# right most of the time, and a font it guesses wrong on is a corrupt file.
+*.ttf binary
+*.otf binary
+*.woff2 binary

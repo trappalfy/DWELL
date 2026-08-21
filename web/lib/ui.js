@@ -39,9 +39,30 @@ export function armReveals() {
 
 export function armTypewriters() {
   const headings = [...document.querySelectorAll(".term")];
-  // Marked only now: without JS the heading must stay fully written out.
-  if (!still()) headings.forEach((heading) => heading.classList.add("will-type"));
-  onceVisible(headings, 0.6, (heading) => heading.classList.add("is-visible"));
+  const reveal = () => onceVisible(headings, 0.6, (heading) => heading.classList.add("is-visible"));
+
+  if (still()) {
+    reveal();
+    return;
+  }
+
+  const arm = () => {
+    for (const heading of headings) {
+      const text = heading.querySelector(".term-text");
+      // Measured, not counted in ch: the pixel faces are not guaranteed to be
+      // monospaced, and a character count would end the animation in the
+      // wrong place for any face that is not.
+      if (text) heading.style.setProperty("--type-width", `${text.getBoundingClientRect().width}px`);
+      // Marked only now: without JS the heading must stay fully written out.
+      heading.classList.add("will-type");
+    }
+    reveal();
+  };
+
+  // Measuring before the faces land would size the animation to the fallback.
+  const fonts = document.fonts;
+  if (fonts && fonts.ready) fonts.ready.then(arm, arm);
+  else arm();
 }
 
 export function wireAccordion(list) {

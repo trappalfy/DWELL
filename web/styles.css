@@ -12,6 +12,27 @@
  * borrows the viewer's.
  */
 
+/* ------------------------------------------------------------------ faces */
+
+/*
+ * Served by our own process from web/fonts, not by a font CDN: the page
+ * already avoids third-party requests, and both files are single-digit
+ * kilobytes. swap keeps text readable while they load.
+ */
+@font-face {
+  font-family: "Koganejidainogemu";
+  src: url("/fonts/koganejidainogemu.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PB Pixel";
+  src: url("/fonts/pb-pixel.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   /* night, outside */
   --night-deep: #0a0a14;
@@ -29,8 +50,18 @@
   --bark: #2e2733;
   --glass: #1c1b33;
 
-  --display: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
-  --mono: "VT323", ui-monospace, "Courier New", monospace;
+  /*
+   * Three faces, three jobs.
+   *
+   * The split is not decorative: a bitmap face is drawn for one pixel size,
+   * so it holds a heading and falls apart in a footnote. Pixel where the
+   * text labels something, Karla where the text is actually read.
+   *
+   * Both pixel faces are self-hosted from web/fonts. The fallbacks behind
+   * them keep the page correct if a file is ever missing.
+   */
+  --display: "Koganejidainogemu", "Pixelify Sans", ui-monospace, monospace;
+  --pixel: "PB Pixel", "Silkscreen", ui-monospace, monospace;
   --body: "Karla", system-ui, -apple-system, sans-serif;
 
   /* Everything spaces off four pixels, so nothing lands between art pixels. */
@@ -187,7 +218,7 @@ a {
 }
 
 .nav a {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 19px;
   letter-spacing: 0.08em;
   text-decoration: none;
@@ -211,7 +242,7 @@ a {
 }
 
 .built {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 15px;
   line-height: 1.15;
   letter-spacing: 0.06em;
@@ -230,7 +261,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--u) * 2);
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 20px;
   letter-spacing: 0.06em;
   color: var(--linen);
@@ -308,7 +339,7 @@ main {
 }
 
 .tagline {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 24px;
   letter-spacing: 0.16em;
   color: var(--haze);
@@ -488,7 +519,7 @@ main {
 }
 
 .readout-label {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 17px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -504,14 +535,14 @@ main {
 }
 
 .readout-unit {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 20px;
   letter-spacing: 0.14em;
   color: var(--ember);
 }
 
 .status {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 21px;
   letter-spacing: 0.03em;
   color: var(--haze);
@@ -601,7 +632,7 @@ main {
 }
 
 .countdown-lead {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 22px;
   letter-spacing: 0.1em;
   color: var(--haze);
@@ -632,7 +663,7 @@ main {
 }
 
 .unit i {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 14px;
   font-style: normal;
   letter-spacing: 0.2em;
@@ -648,7 +679,7 @@ main {
 }
 
 .countdown-note {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 18px;
   color: var(--dusk);
   margin: calc(var(--u) * 4) 0 0;
@@ -674,7 +705,7 @@ main {
 .term {
   display: flex;
   align-items: baseline;
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 30px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -688,6 +719,11 @@ main {
 }
 
 /* Set only once JS is alive, so a page without it shows the heading outright. */
+/* Measured by JS from the rendered text: ch only holds for a monospaced face. */
+.term {
+  --type-width: max-content;
+}
+
 .term.will-type .term-text {
   width: 0;
 }
@@ -701,7 +737,7 @@ main {
     width: 0;
   }
   to {
-    width: calc(var(--chars) * 1ch);
+    width: var(--type-width);
   }
 }
 
@@ -814,7 +850,7 @@ main {
 }
 
 .node-when {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 15px;
   letter-spacing: 0.08em;
   color: var(--flame);
@@ -901,7 +937,7 @@ main {
 }
 
 .tier-label {
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 17px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -939,7 +975,7 @@ main {
 }
 
 .footnote {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 16px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1130,7 +1166,9 @@ main {
   border: 0;
   padding: 0;
   cursor: pointer;
-  font-family: var(--mono);
+  font-family: var(--body);
+  /* Questions carry weight where the pixel face used to carry shape. */
+  font-weight: 500;
   font-size: 21px;
   letter-spacing: 0.02em;
   color: var(--linen);
@@ -1192,7 +1230,7 @@ main {
 
 .foot-line {
   position: relative;
-  font-family: var(--mono);
+  font-family: var(--pixel);
   font-size: 28px;
   color: var(--haze);
   margin: 0;
@@ -1206,7 +1244,7 @@ main {
 
 .foot-fine {
   position: relative;
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 15px;
   letter-spacing: 0.04em;
   color: var(--dusk);

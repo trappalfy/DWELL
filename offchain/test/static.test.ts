@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resolveStaticFile } from "../src/api/static.ts";
@@ -50,4 +50,17 @@ test("несуществующий файл даёт null, а не исключ�
 
 test("каталог сам по себе не отдаётся", () => {
   assert.equal(resolveStaticFile(root, "/lib"), null);
+});
+
+test("шрифты отдаются с типом, который браузер примет", () => {
+  // Гарнитуры лежат у нас, а не на чужом CDN. Неверный content-type для
+  // шрифта — это молчаливый откат на запасную гарнитуру, а не ошибка.
+  const dir = mkdtempSync(join(tmpdir(), "dwell-fonts-"));
+  writeFileSync(join(dir, "pb-pixel.ttf"), Buffer.from([0x00, 0x01, 0x00, 0x00]));
+
+  const hit = resolveStaticFile(dir, "/pb-pixel.ttf");
+  assert.ok(hit, "шрифт не отдан");
+  assert.equal(hit.contentType, "font/ttf");
+
+  rmSync(dir, { recursive: true, force: true });
 });

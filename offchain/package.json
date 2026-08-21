@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "fixture": "node scripts/generate-merkle-fixture.ts",
     "dev": "node scripts/dev-server.ts",
-    "art": "node scripts/generate-art.ts"
+    "art": "node scripts/generate-art.ts",
+    "fonts": "node scripts/check-fonts.ts"
   },
   "dependencies": {
     "@openzeppelin/merkle-tree": "^1.0.8",

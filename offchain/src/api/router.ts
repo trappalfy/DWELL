@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { resolveStaticFile } from "./static.ts";
 
 export interface RouteContext {
   readonly body: unknown;
@@ -34,7 +35,12 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
-export function createRouter(routes: Routes) {
+export interface RouterOptions {
+  /** Directory served for paths outside /v1. Omit to serve the API alone. */
+  readonly staticRoot?: string;
+}
+
+export function createRouter(routes: Routes, options: RouterOptions = {}) {
   return async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
@@ -44,6 +50,19 @@ export function createRouter(routes: Routes) {
     }
 
     const handler = routes[`${request.method} ${url.pathname}`];
+
+    // The API owns /v1; everything else is the page. Checked only after the
+    // route table misses, so a bug in static serving can never shadow an
+    // endpoint.
+    if (!handler && options.staticRoot && request.method === "GET") {
+      const file = resolveStaticFile(options.staticRoot, url.pathname);
+      if (file) {
+        response.writeHead(200, { "content-type": file.contentType, ...CORS_HEADERS });
+        response.end(file.body);
+        return;
+      }
+    }
+
     if (!handler) {
       response.writeHead(404, { "content-type": "application/json", ...CORS_HEADERS });
       response.end(JSON.stringify({ error: "not found" }));

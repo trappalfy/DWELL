@@ -2,7 +2,9 @@ import { verifyMessage } from "viem";
 import { ChallengeStore } from "../auth/challenge.ts";
 import { SessionStore } from "../auth/sessions.ts";
 import { RateLimiter } from "./ratelimit.ts";
-import { bucketOf, epochOf } from "../epoch.ts";
+import { bucketOf, epochOf, EPOCH_SECONDS, BUCKET_SECONDS } from "../epoch.ts";
+import { PUBLISH_EVERY_EPOCHS } from "../worker/publisher.ts";
+import { ADDRESSES } from "../config.ts";
 import { buildTree } from "../tree.ts";
 import type { Routes } from "./router.ts";
 import type { HeartbeatStore } from "../db/heartbeats.ts";
@@ -15,10 +17,16 @@ export interface HandlerDeps {
   readonly reader: {
     currentBlock(): Promise<bigint>;
     balancesAt(accounts: readonly Address[], blockNumber?: bigint): Promise<Map<Address, bigint>>;
+    claimed(vault: Address, account: Address): Promise<bigint>;
   };
   readonly minBalance: bigint;
+  readonly vaultAddress: Address;
+  readonly projectToken: Address;
   readonly now: () => number;
 }
+
+/** Mirrors RewardVault.CLAIM_DELAY; the UI needs it to say when a root goes live. */
+const CLAIM_DELAY_SECONDS = 300;
 
 function isAddress(value: unknown): value is Address {
   return typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value);
@@ -94,7 +102,7 @@ export function createHandlers(deps: HandlerDeps): Routes {
       };
     },
 
-    "GET /v1/me": ({ bearer, url }) => {
+    "GET /v1/me": async ({ bearer, url }) => {
       const queried = url.searchParams.get("account");
       const account = bearer
         ? sessions.resolve(bearer, deps.now())
@@ -103,23 +111,49 @@ export function createHandlers(deps: HandlerDeps): Routes {
           : null;
       if (!account) return { status: 400, body: { error: "account or session required" } };
 
+      const balances = await deps.reader.balancesAt([account]);
+      const balance = balances.get(account) ?? 0n;
+
       const cumulative = deps.entitlements.load();
       const mine = cumulative.get(account) ?? 0n;
-      if (mine === 0n) {
-        return { status: 200, body: { account, cumulative: "0", proof: null } };
-      }
+      const withdrawn = await deps.reader.claimed(deps.vaultAddress, account);
+
+      // The published root can lag the journal, so on-chain withdrawals may
+      // briefly exceed what the journal has recorded. Clamp rather than
+      // report a negative amount the UI would have to special-case.
+      const claimable = mine > withdrawn ? mine - withdrawn : 0n;
+
+      const base = {
+        account,
+        balance: balance.toString(),
+        eligible: balance >= deps.minBalance,
+        cumulative: mine.toString(),
+        claimed: withdrawn.toString(),
+        claimable: claimable.toString()
+      };
+
+      if (mine === 0n) return { status: 200, body: { ...base, root: null, proof: null } };
 
       const tree = buildTree(cumulative);
       return {
         status: 200,
-        body: {
-          account,
-          cumulative: mine.toString(),
-          root: tree.root,
-          proof: tree.proofFor(account)
-        }
+        body: { ...base, root: tree.root, proof: tree.proofFor(account) }
       };
     },
+
+    "GET /v1/config": () => ({
+      status: 200,
+      body: {
+        vault: deps.vaultAddress,
+        projectToken: deps.projectToken,
+        rewardToken: ADDRESSES.tsla,
+        minBalance: deps.minBalance.toString(),
+        epochSeconds: EPOCH_SECONDS,
+        bucketSeconds: BUCKET_SECONDS,
+        claimDelaySeconds: CLAIM_DELAY_SECONDS,
+        publishEveryEpochs: PUBLISH_EVERY_EPOCHS
+      }
+    }),
 
     "GET /v1/stats": () => {
       const now = Math.floor(deps.now() / 1_000);

@@ -7,7 +7,8 @@ const ERC20_ABI = parseAbi(["function balanceOf(address) view returns (uint256)"
 
 const VAULT_ABI = parseAbi([
   "function totalAllocated() view returns (uint256)",
-  "function totalClaimed() view returns (uint256)"
+  "function totalClaimed() view returns (uint256)",
+  "function claimed(address) view returns (uint256)"
 ]);
 
 const ROOT_PUBLISHED_EVENT = parseAbiItem(
@@ -104,6 +105,16 @@ export class ChainReader {
       root: latest.args.root as string,
       throughEpoch: Number(latest.args.throughEpoch)
     };
+  }
+
+  /** How much this account has already withdrawn; claimable is cumulative minus this. */
+  claimed(vault: Address, account: Address): Promise<bigint> {
+    return this.#client.readContract({
+      address: vault,
+      abi: VAULT_ABI,
+      functionName: "claimed",
+      args: [account]
+    }) as Promise<bigint>;
   }
 
   ethBalance(account: Address): Promise<bigint> {

@@ -14,6 +14,8 @@ import { checkPublishedRoot } from "./worker/watchdog.ts";
 import { convertFeesIfDue } from "./worker/feeConverter.ts";
 import { startWorker } from "./worker/loop.ts";
 import { startServer } from "./server.ts";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 const config = loadWorkerConfig(process.env);
 
@@ -34,8 +36,17 @@ const alert = (message: string): void => {
 };
 
 const server = startServer(
-  { heartbeats, entitlements, reader, minBalance: config.minBalance, now: () => Date.now() },
-  config.port
+  {
+    heartbeats,
+    entitlements,
+    reader,
+    minBalance: config.minBalance,
+    vaultAddress: config.rewardVault,
+    projectToken: config.projectToken,
+    now: () => Date.now()
+  },
+  config.port,
+  { staticRoot: join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web") }
 );
 
 const worker = startWorker(

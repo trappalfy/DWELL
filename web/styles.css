@@ -258,13 +258,21 @@ a {
 
 /* ------------------------------------------------------------------- bar */
 
+/*
+ * A grid, not a flex row with space-between: with three children of
+ * unequal width, space-between only equalises the two gaps, not the two
+ * outer widths — so the nav drifted toward whichever side (brand or
+ * bar-end) happened to be narrower. A 1fr/auto/1fr grid gives the nav its
+ * own column and centres it in the row regardless of what its neighbours
+ * weigh.
+ */
 .bar {
   position: sticky;
   top: 0;
   z-index: 5;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: calc(var(--u) * 4);
   max-width: var(--page);
   margin: 0 auto;
@@ -272,24 +280,47 @@ a {
   backdrop-filter: blur(6px);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  /* Left, not justify-self:start: that keeps the item at its own max-content
+     size and ignores the column, which is harmless here but inconsistent
+     with .bar-end below — see the note there for why it matters on a narrow
+     viewport. */
+  min-width: 0;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: block;
+  width: auto;
+  height: 32px;
+}
+
 .wordmark {
   font-family: var(--display);
   font-size: 21px;
   /* Never above 400: the face ships one Regular, and anything more is faked. */
   font-weight: 400;
+  line-height: 1;
   letter-spacing: var(--px-gap);
-  text-decoration: none;
   color: var(--linen);
 }
 
 .nav {
   display: flex;
+  justify-self: center;
   gap: calc(var(--u) * 9);
 }
 
 .nav a {
   font-family: var(--pixel);
   font-size: 26px;
+  /* Without this it fell through to body's 1.65 leading, which at this size
+     pushed the link's box far taller than its underline sits, throwing off
+     the row's vertical centring against the brand mark and the button. */
+  line-height: 1;
   letter-spacing: 0.08em;
   text-decoration: none;
   color: var(--haze);
@@ -308,7 +339,19 @@ a {
 .bar-end {
   display: flex;
   align-items: center;
+  /*
+   * flex-end, not justify-self:end on the grid item: justify-self:end sizes
+   * a grid item to its own max-content width and lets it ignore the column
+   * entirely, so on a narrow viewport the connect button — the widest thing
+   * in the header since the label sizes went up — overflowed past the edge
+   * instead of shrinking. Left at its default (stretch), the item fills the
+   * 1fr column, and flex-end here pushes its contents to that column's
+   * right edge the same as before; now the column width is a real
+   * constraint the button's own text can wrap inside instead of overflow.
+   */
+  justify-content: flex-end;
   gap: calc(var(--u) * 4);
+  min-width: 0;
 }
 
 .built {
@@ -333,12 +376,19 @@ a {
   gap: calc(var(--u) * 2);
   font-family: var(--pixel);
   font-size: 28px;
+  /* Without this it fell through to body's 1.65 leading: at this font-size
+     that inflated the button to roughly 66px tall while border-radius
+     stayed at the 24px tuned for the old, smaller label size, so the pill
+     rendered as a squashed, uneven rounded box instead of a clean stadium. */
+  line-height: 1;
   letter-spacing: 0.06em;
   color: var(--linen);
   background: rgba(58, 56, 73, 0.35);
   border: 2px solid var(--dusk);
-  /* The one rounded thing on the page, exactly as the reference has it. */
-  border-radius: 24px;
+  /* Always a full pill regardless of how tall the button ends up: a radius
+     this large is clamped by the browser to exactly half the shorter side,
+     so it can't go stale again the next time the label size changes. */
+  border-radius: 999px;
   padding: calc(var(--u) * 2) calc(var(--u) * 5);
   cursor: pointer;
   transition:
@@ -389,7 +439,9 @@ main {
 .hero {
   max-width: 900px;
   margin: 0 auto;
-  padding: calc(var(--u) * 8) var(--side) calc(var(--u) * 16);
+  /* Trimmed from 8u: the stack below is tall enough on its own that the
+     claim button sat past the fold on an ordinary viewport. */
+  padding: calc(var(--u) * 3) var(--side) calc(var(--u) * 16);
   text-align: center;
 }
 
@@ -421,14 +473,23 @@ main {
 .tagline {
   font-family: var(--pixel);
   font-size: 32px;
+  /* See .cta for why the --pixel labels need this stated explicitly rather
+     than falling through to body's 1.65. */
+  line-height: 1.2;
   letter-spacing: 0.16em;
   color: var(--haze);
-  margin: var(--u) 0 calc(var(--u) * 6);
+  margin: var(--u) 0 calc(var(--u) * 3);
 }
 
 .stage {
   position: relative;
-  max-width: 720px;
+  /*
+   * Down from 720px: at the 320x200 viewBox's 5:8 ratio that was 450px tall,
+   * which by itself pushed the claim button below the fold on an ordinary
+   * laptop viewport. 460px keeps the house legible while giving the rest of
+   * the hero room to fit above it.
+   */
+  max-width: 460px;
   margin: 0 auto;
 }
 
@@ -595,12 +656,13 @@ main {
   align-items: baseline;
   justify-content: center;
   gap: calc(var(--u) * 2);
-  margin: calc(var(--u) * 5) 0 0;
+  margin: calc(var(--u) * 2) 0 0;
 }
 
 .readout-label {
   font-family: var(--pixel);
   font-size: 24px;
+  line-height: 1.2;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dusk);
@@ -618,6 +680,7 @@ main {
 .readout-unit {
   font-family: var(--pixel);
   font-size: 28px;
+  line-height: 1.2;
   letter-spacing: 0.14em;
   color: var(--ember);
 }
@@ -627,7 +690,7 @@ main {
   font-size: 21px;
   letter-spacing: 0.03em;
   color: var(--haze);
-  margin: calc(var(--u) * 4) auto 0;
+  margin: calc(var(--u) * 2) auto 0;
   max-width: 46ch;
   min-height: 2.4em;
 }
@@ -637,7 +700,7 @@ main {
 }
 
 .actions {
-  margin-top: calc(var(--u) * 4);
+  margin-top: calc(var(--u) * 2);
   min-height: 48px;
 }
 
@@ -715,6 +778,7 @@ main {
 .countdown-lead {
   font-family: var(--pixel);
   font-size: 30px;
+  line-height: 1.2;
   letter-spacing: 0.1em;
   color: var(--haze);
   margin: 0;
@@ -1029,6 +1093,7 @@ main {
 .tier-label {
   font-family: var(--pixel);
   font-size: 24px;
+  line-height: 1.2;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--haze);
@@ -1329,6 +1394,7 @@ main {
   position: relative;
   font-family: var(--pixel);
   font-size: 36px;
+  line-height: 1.2;
   color: var(--haze);
   margin: 0;
 }
@@ -1446,6 +1512,34 @@ main {
 
   .slide-copy {
     max-width: none;
+  }
+}
+
+/*
+ * Below 768px nav is already gone and .built went earlier still (1024px), so
+ * the header is down to just the brand mark and the connect button — but
+ * the button grew wide enough at its desktop size, from making the small
+ * text bigger earlier, that the two started crowding each other well before
+ * the 480px step where the rest of the type scale shrinks. Caught by
+ * rendering the page at 500-600px CSS width, not by guessing.
+ */
+@media (max-width: 640px) {
+  .brand {
+    gap: calc(var(--u) * 2);
+  }
+
+  .brand-mark {
+    height: 22px;
+  }
+
+  /* One step down the 7px grid, same as the hero title takes at 480px. */
+  .wordmark {
+    font-size: 14px;
+  }
+
+  .cta {
+    font-size: 18px;
+    padding: calc(var(--u) * 1) calc(var(--u) * 3);
   }
 }
 

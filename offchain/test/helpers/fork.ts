@@ -31,8 +31,11 @@ export async function startFork(): Promise<ForkHandle> {
     { stdio: "ignore" }
   );
 
+  // Two suites can fork mainnet at once, and each has to pull state before
+  // it answers. Sixty seconds was not enough under that contention and the
+  // tests silently skipped, which proves nothing.
   const client = createPublicClient({ transport: http(rpcUrl) });
-  for (let attempt = 0; attempt < 120; attempt++) {
+  for (let attempt = 0; attempt < 240; attempt++) {
     try {
       await client.getBlockNumber();
       return { rpcUrl, stop: () => child.kill() };
@@ -42,5 +45,5 @@ export async function startFork(): Promise<ForkHandle> {
   }
 
   child.kill();
-  throw new Error("anvil did not become ready in 60s");
+  throw new Error("anvil did not become ready in 120s");
 }

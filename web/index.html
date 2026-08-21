@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>DWELL — the hearth burns while you're here</title>
+    <meta name="description" content="Hold $DWELL, keep the tab visible, earn tokenized Tesla stock."/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Karla:wght@400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/styles.css"/>
+  </head>
+  <body>
+    <header class="bar">
+      <span class="wordmark">DWELL</span>
+      <button id="connect" class="button" type="button">Connect wallet</button>
+    </header>
+
+    <main>
+      <section class="room" data-state="cold">
+        <p class="mantel">
+          <span class="mantel-label">Mined</span>
+          <span class="mantel-value" id="mined">0.0000</span>
+          <span class="mantel-unit">TSLA</span>
+        </p>
+
+        <!-- hearth:begin -->
+<svg class="hearth" viewBox="0 0 160 120" role="img"
+     aria-label="A hearth in a dark room" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="firelight" cx="50%" cy="73.33333333333333%" r="55%">
+      <stop offset="0%" class="glow-hot"/>
+      <stop offset="100%" class="glow-out"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="160" height="120" class="wall"/>
+  <rect x="0" y="96" width="160" height="24" class="floor"/>
+  <rect x="0" y="96" width="160" height="1" class="edge"/>
+
+  <rect x="36" y="48" width="88" height="6" class="stone"/>
+  <rect x="44" y="54" width="72" height="42" class="stone-dark"/>
+  <rect x="52" y="60" width="56" height="36" class="opening"/>
+
+  <rect x="62" y="86" width="36" height="4" class="log"/>
+  <rect x="68" y="90" width="24" height="4" class="log"/>
+
+  <g class="fire">
+    <g class="frame f1"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="73" y="76" width="14" height="2" class="fl-outer"/><rect x="77" y="76" width="6" height="2" class="fl-inner"/><rect x="74" y="74" width="12" height="2" class="fl-outer"/><rect x="77" y="74" width="6" height="2" class="fl-inner"/><rect x="75" y="72" width="10" height="2" class="fl-outer"/><rect x="78" y="72" width="4" height="2" class="fl-inner"/><rect x="76" y="70" width="8" height="2" class="fl-outer"/><rect x="78" y="70" width="4" height="2" class="fl-inner"/><rect x="77" y="68" width="6" height="2" class="fl-outer"/><rect x="79" y="68" width="2" height="2" class="fl-inner"/><rect x="78" y="66" width="4" height="2" class="fl-outer"/><rect x="78" y="64" width="4" height="2" class="fl-outer"/><rect x="79" y="62" width="2" height="2" class="fl-outer"/></g>
+    <g class="frame f2"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="71" y="76" width="14" height="2" class="fl-outer"/><rect x="75" y="76" width="6" height="2" class="fl-inner"/><rect x="72" y="74" width="12" height="2" class="fl-outer"/><rect x="75" y="74" width="6" height="2" class="fl-inner"/><rect x="73" y="72" width="10" height="2" class="fl-outer"/><rect x="76" y="72" width="4" height="2" class="fl-inner"/><rect x="72" y="70" width="8" height="2" class="fl-outer"/><rect x="74" y="70" width="4" height="2" class="fl-inner"/><rect x="73" y="68" width="6" height="2" class="fl-outer"/><rect x="75" y="68" width="2" height="2" class="fl-inner"/><rect x="74" y="66" width="4" height="2" class="fl-outer"/><rect x="72" y="64" width="4" height="2" class="fl-outer"/><rect x="73" y="62" width="2" height="2" class="fl-outer"/></g>
+    <g class="frame f3"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="75" y="76" width="14" height="2" class="fl-outer"/><rect x="79" y="76" width="6" height="2" class="fl-inner"/><rect x="76" y="74" width="12" height="2" class="fl-outer"/><rect x="79" y="74" width="6" height="2" class="fl-inner"/><rect x="77" y="72" width="10" height="2" class="fl-outer"/><rect x="80" y="72" width="4" height="2" class="fl-inner"/><rect x="80" y="70" width="8" height="2" class="fl-outer"/><rect x="82" y="70" width="4" height="2" class="fl-inner"/><rect x="81" y="68" width="6" height="2" class="fl-outer"/><rect x="83" y="68" width="2" height="2" class="fl-inner"/><rect x="82" y="66" width="4" height="2" class="fl-outer"/><rect x="84" y="64" width="4" height="2" class="fl-outer"/><rect x="85" y="62" width="2" height="2" class="fl-outer"/></g>
+  </g>
+
+  <rect x="0" y="0" width="160" height="120" fill="url(#firelight)" class="light"
+        shape-rendering="auto"/>
+</svg>
+        <!-- hearth:end -->
+
+        <p class="status" id="status">The hearth is cold. Connect a wallet to light it.</p>
+
+        <div class="actions">
+          <button id="claim" class="button button-warm" type="button" hidden>Claim</button>
+        </div>
+      </section>
+
+      <section class="prose">
+        <h1>Keep this open.<br/>The hearth burns while you're here.</h1>
+        <p class="lede">
+          Hold $DWELL, leave the tab visible, and earn tokenized Tesla stock.
+          Nothing is deposited — your tokens never leave your wallet.
+        </p>
+
+        <ol class="steps">
+          <li>
+            <h2>Hold</h2>
+            <p>Keep at least <span id="min-balance">100,000</span> $DWELL in your wallet. The protocol only reads your balance; it can never move it.</p>
+          </li>
+          <li>
+            <h2>Stay</h2>
+            <p>Leave this tab visible. Every ten seconds the hearth notes you're still here. Switch away and it stops counting.</p>
+          </li>
+          <li>
+            <h2>Claim</h2>
+            <p>Rewards build up in TSLA and never expire. Claim whenever you like — one claim collects everything owed.</p>
+          </li>
+        </ol>
+
+        <p class="aside">
+          The fire only burns while someone tends it. When nobody is here,
+          nothing is spent — the reserve simply waits.
+        </p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span id="miners">—</span> tending the fire now
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

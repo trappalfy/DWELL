@@ -327,17 +327,24 @@ main {
 .title {
   font-family: var(--display);
   /* Stepped, not fluid: see the note on the 32px grid above the tokens. */
-  font-size: 64px;
+  font-size: 128px;
   font-weight: 400;
   line-height: 0.95;
-  letter-spacing: 0.06em;
+  /* Two font units. Anything off that grid blurs every letter but the first. */
+  letter-spacing: 0.0625em;
   margin: 0;
-  text-shadow: 0 0 32px rgba(255, 122, 52, 0.28);
+  text-shadow: 0 0 56px rgba(255, 122, 52, 0.3);
 }
 
 /* One letter carries the accent, the way the reference reddens its numeral. */
 .title-last {
   color: var(--ember);
+  /*
+   * Cancels the space trailing the last glyph — its right side bearing plus
+   * the tracking. Without it the browser centres a box that is wider than the
+   * ink, and the word sits visibly left of centre.
+   */
+  margin-right: -0.156em;
 }
 
 .tagline {
@@ -1219,7 +1226,7 @@ main {
   font-family: var(--display);
   font-size: 128px;
   font-weight: 400;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.0625em;
   line-height: 1;
   color: #221d33;
   white-space: nowrap;
@@ -1228,6 +1235,8 @@ main {
 
 .watermark b {
   color: #4a2a1c;
+  /* Same trailing-space cancellation as the headline; see .title-last. */
+  margin-right: -0.156em;
 }
 
 .foot-line {
@@ -1301,7 +1310,7 @@ main {
 @media (max-width: 768px) {
   /* Down one step on the 16px grid, never between steps. */
   .title {
-    font-size: 48px;
+    font-size: 96px;
   }
 
   .slide-name {
@@ -1359,7 +1368,7 @@ main {
   }
 
   .title {
-    font-size: 32px;
+    font-size: 64px;
   }
 
   .watermark {

@@ -65,6 +65,16 @@ export async function publishIfDue(deps: PublishDeps): Promise<PublishOutcome> {
   const tree = buildTree(cumulative);
   const totalAllocated = sumEntitlements(cumulative);
 
+  // Epochs keep closing even when nobody mines, so without this check a dead
+  // period would republish an identical root every interval and pay gas for
+  // a transaction that changes nothing.
+  if (lastPublished !== null) {
+    const previous = deps.roots.rootFor(lastPublished);
+    if (previous && previous.root.toLowerCase() === tree.root.toLowerCase()) {
+      return { published: false, reason: "root unchanged since last publish", root: tree.root };
+    }
+  }
+
   if (deps.dryRun) {
     return { published: false, reason: `dry-run: would publish ${tree.root}`, root: tree.root };
   }

@@ -2,27 +2,36 @@ import type { VaultState } from "./types.ts";
 
 export const WAD = 10n ** 18n;
 
-export const HALF_LIFE_DAYS = 1;
+export const EPOCHS_PER_HOUR = 12;
 export const EPOCHS_PER_DAY = 288;
-export const HALF_LIFE_EPOCHS = HALF_LIFE_DAYS * EPOCHS_PER_DAY;
+export const HALF_LIFE_HOURS = 6;
+export const HALF_LIFE_EPOCHS = HALF_LIFE_HOURS * EPOCHS_PER_HOUR;
 
 /**
  * Fraction of the free reserve released each epoch, scaled by WAD.
  *
  *   RATE = 1 - 0.5 ^ (1 / HALF_LIFE_EPOCHS)
- *        = 1 - 0.5 ^ (1 / 288)
- *        = 0.002403867116379740...
+ *        = 1 - 0.5 ^ (1 / 72)
+ *        = 0.009580852533173743...
  *
  * Releasing a fraction rather than a fixed amount is what keeps the reward
  * stream smooth and non-zero: a share of something is always above zero, and
- * a spike in fee income spreads across days instead of landing in one epoch.
+ * a spike in fee income spreads across epochs instead of landing in one.
  *
- * A one-day half-life front-loads hard — half the reserve goes out on day
- * one — which matches how briefly attention lasts here. The trade is a thin
- * tail: by day three roughly seven eighths is spent. The property test below
- * derives the halving from this constant rather than trusting the literal.
+ * The half-life is measured in MINED epochs, not wall-clock time: with no
+ * active weight computeRelease returns zero and the reserve is untouched.
+ * A quiet night therefore costs the pool nothing — six hours means six hours
+ * of somebody actually holding a tab open.
+ *
+ * Six hours empties ~94% within a day of active mining. That is deliberate:
+ * the budget here is small and meant to land while attention is on the
+ * launch, and later top-ups from fees flow out just as promptly rather than
+ * being hoarded for a tail nobody stays for.
+ *
+ * The property test derives the halving from this constant rather than
+ * trusting the literal, so a wrong digit fails the suite.
  */
-export const RATE_WAD = 2_403_867_116_379_740n;
+export const RATE_WAD = 9_580_852_533_173_743n;
 
 /**
  * Reward-asset balance not yet promised to anyone.

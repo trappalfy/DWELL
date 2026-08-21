@@ -112,3 +112,34 @@ test("пустые кумулятивы не публикуются", async () =
   assert.equal(outcome.published, false, "дерево без листьев построить нельзя");
   assert.equal(sent.length, 0);
 });
+
+test("неизменившийся корень не публикуется повторно", async () => {
+  const { deps, epochs, entitlements, sent } = fixture();
+  entitlements.save(new Map([[A, 500n]]));
+  for (let e = 100; e < 100 + PUBLISH_EVERY_EPOCHS; e++) epochs.markSettled(e, 10n, 5n);
+  assert.equal((await publishIfDue(deps)).published, true);
+
+  // Никто не майнит: эпохи закрываются пустыми, начисления не меняются.
+  // Отправлять тот же корень — значит платить газ ни за что.
+  for (let e = 106; e < 106 + PUBLISH_EVERY_EPOCHS; e++) epochs.markSettled(e, 0n, 0n);
+  const outcome = await publishIfDue(deps);
+
+  assert.ok(!outcome.published);
+  assert.match(outcome.reason, /unchanged/i);
+  assert.equal(sent.length, 1, "второй публикации быть не должно");
+});
+
+test("изменившийся корень публикуется", async () => {
+  const { deps, epochs, entitlements, sent } = fixture();
+  entitlements.save(new Map([[A, 500n]]));
+  for (let e = 100; e < 100 + PUBLISH_EVERY_EPOCHS; e++) epochs.markSettled(e, 10n, 5n);
+  await publishIfDue(deps);
+
+  // Начислили ещё — корень обязан уехать в цепочку.
+  entitlements.save(new Map([[A, 500n], [B, 300n]]));
+  for (let e = 106; e < 106 + PUBLISH_EVERY_EPOCHS; e++) epochs.markSettled(e, 10n, 5n);
+
+  assert.equal((await publishIfDue(deps)).published, true);
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1]!.totalAllocated, 800n);
+});

@@ -484,12 +484,21 @@ main {
 .stage {
   position: relative;
   /*
-   * Down from 720px: at the 320x200 viewBox's 5:8 ratio that was 450px tall,
-   * which by itself pushed the claim button below the fold on an ordinary
-   * laptop viewport. 460px keeps the house legible while giving the rest of
-   * the hero room to fit above it.
+   * Three caps, not one flat number. A fixed px width was either too big on
+   * a short viewport (claim pushed past the fold) or too small on a tall
+   * one (the house shrank even though the screen had room to spare) — it
+   * can't win both at once. Sizing off the viewport itself can:
+   *
+   *   90vw   never wider than the screen, so a narrow phone gets a house
+   *          sized to its own width rather than to a desktop's.
+   *   72vh   at the art's 8:5 ratio that's 45vh of height, which is the
+   *          real constraint on a laptop: it keeps the whole hero,
+   *          claim button included, inside one viewport instead of the
+   *          house alone deciding how tall the page is.
+   *   720px  the ceiling, so a very tall monitor doesn't blow the house up
+   *          past the size it was actually drawn at.
    */
-  max-width: 460px;
+  width: min(720px, 90vw, 72vh);
   margin: 0 auto;
 }
 

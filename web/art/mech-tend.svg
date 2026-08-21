@@ -1,0 +1,11 @@
+<svg viewBox="0 0 480 200"
+     role="img" aria-label="" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <style>.ink-night-deep{fill:#0A0A14}.ink-night-mid{fill:#16142A}.ink-night-soft{fill:#23203D}.ink-dusk{fill:#4A4266}.ink-haze{fill:#9C94BA}.ink-soot{fill:#14131A}.ink-stone{fill:#3A3849}.ink-ember{fill:#FF7A34}.ink-flame{fill:#FFC24A}.ink-linen{fill:#E8E0D2}.ink-bark{fill:#2E2733}.ink-barklit{fill:#6B4A38}.ink-glass{fill:#1C1B33}</style>
+  <defs>
+    <pattern id="d25-night-mid-night-soft" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#16142A"/><rect x="0" y="0" width="4" height="4" fill="#23203D"/></pattern>
+    <pattern id="d25-night-soft-flame" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#23203D"/><rect x="0" y="0" width="4" height="4" fill="#FFC24A"/></pattern>
+    <pattern id="d50-flame-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#FFC24A"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/><rect x="4" y="4" width="4" height="4" fill="#FF7A34"/></pattern>
+  </defs>
+  <rect x="0" y="176" width="480" height="24" fill="#0A0A14"/><rect x="0" y="176" width="480" height="4" fill="#23203D"/><rect x="0" y="152" width="480" height="24" fill="url(#d25-night-mid-night-soft)"/><rect x="292" y="40" width="104" height="112" fill="#14131A"/><rect x="300" y="48" width="88" height="96" fill="url(#d50-flame-ember)"/><rect x="340" y="48" width="8" height="96" fill="#14131A"/><rect x="300" y="92" width="88" height="8" fill="#14131A"/><rect x="284" y="152" width="120" height="8" fill="#2E2733"/><rect x="296" y="160" width="96" height="8" fill="url(#d25-night-soft-flame)"/><rect x="308" y="168" width="72" height="8" fill="url(#d25-night-soft-flame)"/>
+</svg>

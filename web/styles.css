@@ -1,23 +1,42 @@
 /*
- * DWELL — a hearth in a dwelling.
+ * DWELL — night outside, fire inside.
  *
- * Two temperatures, not one accent: the room is cold violet-grey, the fire
- * is the only saturated thing on the page, and its light falls on whatever
- * is near it. There is no light theme on purpose — a room lit by a fire
- * stops meaning anything in daylight.
+ * The page is one journey rather than a stack of sections: it opens on the
+ * dwelling seen from outside under a real night sky, and the ground under the
+ * content warms as you scroll until you are sitting by the hearth. That is why
+ * there are two half-palettes here — cold unsaturated violet for the night,
+ * and one warm accent that belongs to the fire and to nothing else.
+ *
+ * There is no light theme on purpose: a room lit by a fire stops meaning
+ * anything in daylight. Every colour is stated outright so the page never
+ * borrows the viewer's.
  */
+
 :root {
-  --ash: #14131a;
-  --slate: #23222e;
+  /* night, outside */
+  --night-deep: #0a0a14;
+  --night-mid: #16142a;
+  --night-soft: #23203d;
+  --dusk: #4a4266;
+  --haze: #9c94ba;
+
+  /* the room, inside */
+  --soot: #14131a;
   --stone: #3a3849;
   --ember: #ff7a34;
   --flame: #ffc24a;
   --linen: #e8e0d2;
+  --bark: #2e2733;
+  --glass: #1c1b33;
 
   --display: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
+  --mono: "VT323", ui-monospace, "Courier New", monospace;
   --body: "Karla", system-ui, -apple-system, sans-serif;
 
-  --step: 8px;
+  /* Everything spaces off four pixels, so nothing lands between art pixels. */
+  --u: 4px;
+  --page: 1200px;
+  --side: 40px;
 }
 
 *,
@@ -26,288 +45,1331 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  background: var(--ash);
+  min-height: 100%;
+  background: var(--night-deep);
   color: var(--linen);
   font-family: var(--body);
   font-size: 17px;
-  line-height: 1.6;
+  line-height: 1.65;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---- top shelf ---- */
+/*
+ * The travelling ground. Absolute rather than fixed: it has to scroll with
+ * the page for the sky to actually become a room, which a fixed attachment
+ * would flatten into a single static wash.
+ */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background: linear-gradient(
+    to bottom,
+    var(--night-deep) 0%,
+    var(--night-mid) 18%,
+    var(--night-soft) 38%,
+    #1c1a2c 52%,
+    var(--soot) 68%,
+    var(--soot) 88%,
+    #0b0a10 100%
+  );
+}
+
+img {
+  max-width: 100%;
+  image-rendering: pixelated;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--ember);
+  color: var(--soot);
+}
+
+/* ---------------------------------------------------------------- layers */
+
+.sky,
+.clouds,
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sky {
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+}
+
+.clouds {
+  z-index: -1;
+  overflow: hidden;
+}
+
+.band {
+  position: absolute;
+  left: 0;
+  width: 300%;
+  height: 128px;
+  background-repeat: repeat-x;
+  background-size: auto 128px;
+  image-rendering: pixelated;
+  will-change: transform;
+}
+
+.band-far {
+  top: 22vh;
+  background-image: url("/art/clouds-far.svg");
+  opacity: 0.55;
+}
+
+.band-mid {
+  top: 40vh;
+  background-image: url("/art/clouds-mid.svg");
+  opacity: 0.45;
+}
+
+.band-near {
+  top: 58vh;
+  background-image: url("/art/clouds-near.svg");
+  opacity: 0.7;
+}
+
+/*
+ * A vignette rather than scanlines. Scanlines say "terminal"; this page is a
+ * room, and what a room does at night is fall off into the dark at the edges.
+ */
+.vignette {
+  z-index: 3;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(4, 4, 9, 0.75) 100%);
+}
+
+/* ------------------------------------------------------------------- bar */
 
 .bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--step);
-  padding: calc(var(--step) * 2) calc(var(--step) * 3);
-  border-bottom: 1px solid var(--slate);
+  gap: calc(var(--u) * 4);
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: calc(var(--u) * 4) var(--side);
+  backdrop-filter: blur(6px);
 }
 
 .wordmark {
   font-family: var(--display);
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
+  text-decoration: none;
   color: var(--linen);
 }
 
-/* ---- buttons ---- */
+.nav {
+  display: flex;
+  gap: calc(var(--u) * 9);
+}
 
-.button {
-  font-family: var(--display);
+.nav a {
+  font-family: var(--mono);
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  color: var(--haze);
+  padding-bottom: var(--u);
+  border-bottom: 2px dotted transparent;
+  /* No easing on purpose — an instant switch reads more pixel than a fade. */
+  transition: none;
+}
+
+.nav a:hover,
+.nav a:focus-visible {
+  color: var(--flame);
+  border-bottom-color: var(--ember);
+}
+
+.bar-end {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 4);
+}
+
+.built {
+  font-family: var(--mono);
   font-size: 15px;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  color: var(--dusk);
+  text-align: right;
+}
+
+.built b {
+  color: var(--haze);
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  font-family: var(--mono);
+  font-size: 20px;
   letter-spacing: 0.06em;
   color: var(--linen);
-  background: transparent;
-  border: 2px solid var(--stone);
-  border-radius: 0;
-  padding: calc(var(--step) * 1.25) calc(var(--step) * 2);
+  background: rgba(58, 56, 73, 0.35);
+  border: 2px solid var(--dusk);
+  /* The one rounded thing on the page, exactly as the reference has it. */
+  border-radius: 24px;
+  padding: calc(var(--u) * 2) calc(var(--u) * 5);
   cursor: pointer;
-  transition: border-color 140ms ease, color 140ms ease;
+  transition:
+    transform 100ms ease,
+    border-color 100ms ease;
 }
 
-.button:hover:not(:disabled) {
+.cta:hover:not(:disabled) {
   border-color: var(--ember);
   color: var(--flame);
+  transform: translateY(-2px);
 }
 
-.button:focus-visible {
-  outline: 2px solid var(--flame);
-  outline-offset: 3px;
+/* Pressing it moves down: a physical button, not a hover card. */
+.cta:active:not(:disabled) {
+  transform: translateY(2px);
 }
 
-.button:disabled {
+.cta:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.button-warm {
-  border-color: var(--ember);
-  color: var(--flame);
+.cta-mark {
+  width: 12px;
+  height: 12px;
+  background: var(--ember);
 }
 
-/* ---- the room ---- */
+.cta-warm {
+  border-color: var(--ember);
+  color: var(--flame);
+  background: rgba(255, 122, 52, 0.12);
+}
 
-.room {
+:focus-visible {
+  outline: 2px solid var(--flame);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+main {
   position: relative;
-  max-width: 720px;
+  z-index: 2;
+}
+
+.hero {
+  max-width: 900px;
   margin: 0 auto;
-  padding: calc(var(--step) * 5) calc(var(--step) * 3) calc(var(--step) * 6);
+  padding: calc(var(--u) * 8) var(--side) calc(var(--u) * 16);
   text-align: center;
 }
 
-.mantel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin: 0 0 calc(var(--step) * 2);
-}
-
-.mantel-label {
+.title {
   font-family: var(--display);
-  font-size: 12px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--linen) 45%, transparent);
-}
-
-.mantel-value {
-  font-family: var(--display);
-  font-size: clamp(38px, 9vw, 62px);
+  font-size: clamp(56px, 12vw, 108px);
   font-weight: 700;
-  line-height: 1;
-  color: var(--linen);
-  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-shadow: 0 0 32px rgba(255, 122, 52, 0.28);
 }
 
-.mantel-unit {
-  font-family: var(--display);
-  font-size: 14px;
-  letter-spacing: 0.2em;
+/* One letter carries the accent, the way the reference reddens its numeral. */
+.title-last {
   color: var(--ember);
 }
 
-.hearth {
+.tagline {
+  font-family: var(--mono);
+  font-size: 24px;
+  letter-spacing: 0.16em;
+  color: var(--haze);
+  margin: var(--u) 0 calc(var(--u) * 6);
+}
+
+.stage {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.scene {
   display: block;
   width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
   height: auto;
 }
 
-/* Scene palette. The fire is the only saturated thing here. */
-.wall { fill: var(--slate); }
-.floor { fill: var(--ash); }
-.edge { fill: var(--stone); }
-.stone { fill: var(--stone); }
-.stone-dark { fill: color-mix(in srgb, var(--stone) 62%, var(--ash)); }
-.opening { fill: #0d0c12; }
-.log { fill: color-mix(in srgb, var(--stone) 70%, #000); }
+/* The two scenes share a viewBox, so they overlay to the pixel. */
+.scene-interior {
+  position: absolute;
+  inset: 0;
+}
 
-.fl-outer { fill: var(--ember); }
-.fl-inner { fill: var(--flame); }
+.scene-exterior,
+.scene-interior {
+  transition:
+    opacity 700ms ease,
+    transform 700ms ease;
+}
 
-.glow-hot { stop-color: var(--ember); stop-opacity: 0.2; }
-.glow-out { stop-color: var(--ember); stop-opacity: 0; }
+/* Connecting a wallet carries you over the threshold, camera and all. */
+[data-scene="outside"] .scene-interior {
+  opacity: 0;
+  transform: scale(1.08);
+}
 
-/* ---- the fire is the status indicator ---- */
+[data-scene="inside"] .scene-exterior {
+  opacity: 0;
+  transform: scale(0.92);
+}
 
-.frame { opacity: 0; }
+/* ------------------------------------------------- the fire is the status */
 
-.f2 { animation-delay: 140ms; }
-.f3 { animation-delay: 280ms; }
+.wall,
+.floor {
+  fill: var(--soot);
+}
 
-/* Burning: three frames cycling. */
+.pane {
+  fill: var(--glass);
+}
+
+.pane-hot {
+  fill: var(--flame);
+}
+
+.fl-outer {
+  fill: var(--ember);
+}
+
+.fl-inner {
+  fill: var(--flame);
+}
+
+.em-hot {
+  fill: var(--ember);
+}
+
+.glow-hot {
+  stop-color: var(--ember);
+  stop-opacity: 0.22;
+}
+
+.glow-out {
+  stop-color: var(--ember);
+  stop-opacity: 0;
+}
+
+.glow,
+.firelight,
+.embers,
+.smoke {
+  transition: opacity 700ms ease;
+}
+
+.frame {
+  opacity: 0;
+}
+
+/* Cold: no flame, coals barely alive, the room almost unlit. */
+[data-state="cold"] .firelight,
+[data-state="short"] .firelight {
+  opacity: 0.14;
+}
+
+[data-state="cold"] .embers,
+[data-state="short"] .embers {
+  opacity: 0.35;
+}
+
+[data-state="cold"] .glow,
+[data-state="short"] .glow {
+  opacity: 0.2;
+}
+
+[data-state="cold"] .smoke,
+[data-state="short"] .smoke,
+[data-state="idle"] .smoke {
+  opacity: 0;
+}
+
+/* Banked: someone lit it and left. Coals hold, nothing leaps. */
+[data-state="idle"] .firelight {
+  opacity: 0.4;
+}
+
+[data-state="idle"] .glow {
+  opacity: 0.45;
+}
+
+[data-state="idle"] .embers {
+  opacity: 0.8;
+}
+
+/* Burning: three frames, cycled. Two would read as a blink. */
 [data-state="burning"] .frame {
   animation: flicker 420ms steps(1, end) infinite;
 }
 
+[data-state="burning"] .f2 {
+  animation-delay: 140ms;
+}
+
+[data-state="burning"] .f3 {
+  animation-delay: 280ms;
+}
+
+[data-state="burning"] .smoke {
+  animation: rise 4s ease-in-out infinite;
+}
+
 @keyframes flicker {
   0%,
-  33% { opacity: 1; }
+  33% {
+    opacity: 1;
+  }
   34%,
-  100% { opacity: 0; }
+  100% {
+    opacity: 0;
+  }
 }
 
-/* Cold, ineligible, expired: embers only — one still frame, dimmed and low. */
-[data-state="cold"] .f1,
-[data-state="short"] .f1,
-[data-state="idle"] .f1 {
-  opacity: 1;
-  transform: scaleY(0.28);
-  transform-origin: 50% 88px;
-  filter: saturate(0.5) brightness(0.55);
+@keyframes rise {
+  0% {
+    opacity: 0.15;
+    transform: translate(0, 4px);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translate(3px, -2px);
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate(6px, -8px);
+  }
 }
 
-[data-state="cold"] .light,
-[data-state="short"] .light,
-[data-state="idle"] .light {
-  opacity: 0.3;
+/* ---------------------------------------------------- hero readout & copy */
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  margin: calc(var(--u) * 5) 0 0;
 }
 
-.light {
-  transition: opacity 600ms ease;
-  pointer-events: none;
+.readout-label {
+  font-family: var(--mono);
+  font-size: 17px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dusk);
+}
+
+.readout-value {
+  font-family: var(--display);
+  font-size: clamp(36px, 7vw, 56px);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.readout-unit {
+  font-family: var(--mono);
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  color: var(--ember);
 }
 
 .status {
-  font-family: var(--display);
-  font-size: 15px;
-  letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--linen) 70%, transparent);
-  margin: calc(var(--step) * 3) auto 0;
-  max-width: 42ch;
-  min-height: 3em;
+  font-family: var(--mono);
+  font-size: 21px;
+  letter-spacing: 0.03em;
+  color: var(--haze);
+  margin: calc(var(--u) * 4) auto 0;
+  max-width: 46ch;
+  min-height: 2.4em;
 }
 
-[data-state="burning"] .status { color: var(--flame); }
+.stage[data-state="burning"] ~ .status {
+  color: var(--flame);
+}
 
 .actions {
-  margin-top: calc(var(--step) * 2);
+  margin-top: calc(var(--u) * 4);
+  min-height: 48px;
 }
 
-/* ---- prose ---- */
-
-.prose {
-  max-width: 620px;
-  margin: 0 auto;
-  padding: calc(var(--step) * 6) calc(var(--step) * 3) calc(var(--step) * 8);
-  border-top: 1px solid var(--slate);
+.blurb {
+  max-width: 640px;
+  margin: calc(var(--u) * 8) auto 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--haze);
+  /*
+   * The tail dissolves, as in the reference. Nothing load-bearing is put down
+   * there — the sentence that matters is the first one.
+   */
+  -webkit-mask-image: linear-gradient(to bottom, #000 38%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 38%, transparent 100%);
 }
 
-.prose h1 {
+.scroll-hint {
+  display: inline-block;
+  margin-top: calc(var(--u) * 6);
+  padding: var(--u);
+}
+
+.chev-down,
+.chev {
+  display: block;
+  width: 20px;
+  height: 12px;
+  background: var(--haze);
+  /* Stepped, not a smooth triangle: the arrow admits the grid like everything else. */
+  clip-path: polygon(
+    0 0,
+    25% 0,
+    25% 33%,
+    50% 33%,
+    50% 66%,
+    75% 66%,
+    75% 33%,
+    100% 33%,
+    100% 0,
+    75% 0,
+    75% 33%,
+    50% 33%,
+    50% 66%,
+    25% 66%,
+    25% 33%,
+    0 33%
+  );
+}
+
+.chev-down {
+  clip-path: polygon(0 0, 20% 0, 20% 40%, 40% 40%, 40% 70%, 60% 70%, 60% 40%, 80% 40%, 80% 0, 100% 0, 100% 40%, 80% 40%, 80% 70%, 60% 70%, 60% 100%, 40% 100%, 40% 70%, 20% 70%, 20% 40%, 0 40%);
+  animation: nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------- countdown */
+
+.countdown {
+  text-align: center;
+  padding: calc(var(--u) * 10) var(--side);
+}
+
+.countdown-lead {
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  color: var(--haze);
+  margin: 0;
+}
+
+.clock {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+  margin-top: calc(var(--u) * 3);
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 76px;
+}
+
+.unit b {
   font-family: var(--display);
-  font-size: clamp(28px, 5.5vw, 42px);
+  font-size: 44px;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  margin: 0 0 calc(var(--step) * 2);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.lede {
-  font-size: 19px;
-  color: color-mix(in srgb, var(--linen) 82%, transparent);
-  margin: 0 0 calc(var(--step) * 5);
-}
-
-/* Numbered because holding, staying and claiming genuinely happen in order. */
-.steps {
-  list-style: none;
-  counter-reset: step;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: calc(var(--step) * 4);
-}
-
-.steps li {
-  counter-increment: step;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: calc(var(--step) * 2);
-  align-items: start;
-}
-
-.steps li::before {
-  content: counter(step);
-  font-family: var(--display);
+.unit i {
+  font-family: var(--mono);
   font-size: 14px;
-  color: var(--ember);
-  border: 2px solid var(--stone);
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
+  font-style: normal;
+  letter-spacing: 0.2em;
+  color: var(--dusk);
+  margin-top: var(--u);
 }
 
-.steps h2 {
+.sep {
   font-family: var(--display);
-  font-size: 17px;
-  letter-spacing: 0.08em;
-  margin: 4px 0 4px;
+  font-size: 36px;
+  color: var(--stone);
+  line-height: 1.1;
 }
 
-.steps p {
+.countdown-note {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--dusk);
+  margin: calc(var(--u) * 4) 0 0;
+}
+
+/* The fire being out is a fact, not an error: it is stated, not alarmed about. */
+.countdown.is-out .unit b {
+  color: var(--stone);
+}
+
+.countdown.is-out .countdown-note {
+  color: var(--ember);
+}
+
+/* ---------------------------------------------------- terminal headings */
+
+.section {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: calc(var(--u) * 24) var(--side);
+}
+
+.term {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   margin: 0;
-  color: color-mix(in srgb, var(--linen) 76%, transparent);
+  color: var(--linen);
 }
 
-.aside {
-  margin: calc(var(--step) * 5) 0 0;
-  padding-left: calc(var(--step) * 2);
-  border-left: 2px solid var(--ember);
-  color: color-mix(in srgb, var(--linen) 66%, transparent);
+.term-text {
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+/* Set only once JS is alive, so a page without it shows the heading outright. */
+.term.will-type .term-text {
+  width: 0;
+}
+
+.term.will-type.is-visible .term-text {
+  animation: type 800ms steps(var(--chars)) both;
+}
+
+@keyframes type {
+  from {
+    width: 0;
+  }
+  to {
+    width: calc(var(--chars) * 1ch);
+  }
+}
+
+.term::after {
+  content: "";
+  width: 12px;
+  height: 24px;
+  margin-left: 6px;
+  background: var(--ember);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.sigil {
+  color: var(--dusk);
+}
+
+.cmd {
+  color: var(--ember);
+}
+
+.section-lede {
+  font-size: 17px;
+  color: var(--haze);
+  margin: calc(var(--u) * 3) 0 calc(var(--u) * 12);
+  max-width: 60ch;
+}
+
+/* -------------------------------------------------------------- timeline */
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+}
+
+.chev {
+  border: 0;
+  padding: 0;
+  background: var(--dusk);
+  cursor: pointer;
+  flex: none;
+}
+
+.chev-left {
+  transform: rotate(90deg);
+}
+
+.chev-right {
+  transform: rotate(-90deg);
+}
+
+.chev:hover {
+  background: var(--ember);
+}
+
+.track {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--u) * 4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.node {
+  display: grid;
+  justify-items: center;
+  gap: var(--u);
+  flex: 1;
+  min-width: 128px;
+  position: relative;
+  scroll-snap-align: center;
+}
+
+/* The dotted rule between nodes: the reference's line, drawn as dots. */
+.node:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 62px;
+  left: 50%;
+  width: calc(100% + var(--u) * 4);
+  height: 4px;
+  background-image: radial-gradient(circle, var(--stone) 1px, transparent 1px);
+  background-size: 12px 4px;
+}
+
+.node-at {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ember);
+}
+
+.node-when {
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--flame);
+}
+
+.node-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--ember);
+  transform: rotate(45deg);
+  margin: calc(var(--u) * 2) 0;
+  box-shadow: 0 0 12px rgba(255, 122, 52, 0.7);
+}
+
+.node-what {
+  font-size: 15px;
+  color: var(--linen);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------- pedestal */
+
+/*
+ * A star, not three equal columns: the centre sits highest and the pair below
+ * it flank, exactly as the reference lays out its podium.
+ */
+.pedestal {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: end;
+  justify-items: center;
+  gap: calc(var(--u) * 6) calc(var(--u) * 4);
+  grid-template-areas:
+    ".     main .    "
+    "left  main right"
+    "mini1 .    mini2";
+}
+
+.tier {
+  display: grid;
+  justify-items: center;
+  gap: var(--u);
+  text-align: center;
+}
+
+.tier-main {
+  grid-area: main;
+}
+
+.tier-left {
+  grid-area: left;
+}
+
+.tier-right {
+  grid-area: right;
+}
+
+.tier-mini-1 {
+  grid-area: mini1;
+}
+
+.tier-mini-2 {
+  grid-area: mini2;
+}
+
+.tier-art {
+  margin-bottom: calc(var(--u) * 2);
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+.tier-main .tier-art {
+  animation-duration: 2.6s;
+  filter: drop-shadow(0 0 14px rgba(255, 122, 52, 0.55));
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.tier-label {
+  font-family: var(--mono);
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--haze);
+}
+
+.tier-value {
+  font-family: var(--display);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--linen);
+}
+
+.tier-main .tier-value {
+  font-size: 46px;
+  color: var(--flame);
+}
+
+.tier-value-warm {
+  color: var(--ember);
+}
+
+.tier-value-cool {
+  color: var(--haze);
+}
+
+.tier-mini .tier-value {
+  font-size: 24px;
+}
+
+.tier-mini .tier-label {
+  font-size: 15px;
+}
+
+.footnote {
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--dusk);
+  margin: calc(var(--u) * 12) auto 0;
+  max-width: 70ch;
+}
+
+/* -------------------------------------------------------------- carousel */
+
+.mechanics {
+  padding-inline: 0;
+}
+
+.mechanics .term,
+.mechanics .section-lede {
+  padding-inline: var(--side);
+}
+
+.carousel {
+  position: relative;
+  min-height: 640px;
+  display: grid;
+  align-content: center;
+  padding: calc(var(--u) * 16) var(--side);
+  overflow: hidden;
+}
+
+.slide-art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center right;
+  background-size: cover;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+/* A veil plus a leftward gradient, so the copy sits on ground dark enough to read. */
+.slide-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(10, 10, 20, 0.96) 22%, rgba(10, 10, 20, 0.35) 70%),
+    rgba(11, 10, 25, 0.5);
+}
+
+.art-0 {
+  background-image: url("/art/mech-hold.svg");
+}
+
+.art-1 {
+  background-image: url("/art/mech-tend.svg");
+}
+
+.art-2 {
+  background-image: url("/art/mech-burn.svg");
+}
+
+.art-3 {
+  background-image: url("/art/mech-claim.svg");
+}
+
+.carousel[data-slide="0"] .art-0,
+.carousel[data-slide="1"] .art-1,
+.carousel[data-slide="2"] .art-2,
+.carousel[data-slide="3"] .art-3 {
+  opacity: 1;
+}
+
+.slide-copy {
+  max-width: 380px;
+}
+
+.slide-name {
+  font-family: var(--display);
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  margin: 0 0 calc(var(--u) * 4);
+}
+
+.slide-text {
+  font-size: 16px;
+  color: var(--haze);
+  margin: 0;
+}
+
+.slide-copy.is-turning .slide-name,
+.slide-copy.is-turning .slide-text {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.slide-name,
+.slide-text {
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.thumbs {
+  position: absolute;
+  right: var(--side);
+  bottom: calc(var(--u) * 10);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+}
+
+/* A fan of cards, as in the reference: each is turned, the live one is not. */
+.thumb {
+  width: 78px;
+  height: 112px;
+  border: 3px solid var(--haze);
+  background-color: var(--night-mid);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease;
+}
+
+.thumb:nth-of-type(2) {
+  transform: rotate(-4deg);
+}
+
+.thumb:nth-of-type(3) {
+  transform: rotate(3deg);
+}
+
+.thumb:nth-of-type(4) {
+  transform: rotate(-2deg);
+}
+
+.thumb:nth-of-type(5) {
+  transform: rotate(4deg);
+}
+
+.thumb.is-active {
+  transform: rotate(0) scale(1.12);
+  border-color: var(--flame);
+}
+
+.thumb[data-index="0"] {
+  background-image: url("/art/mech-hold.svg");
+}
+
+.thumb[data-index="1"] {
+  background-image: url("/art/mech-tend.svg");
+}
+
+.thumb[data-index="2"] {
+  background-image: url("/art/mech-burn.svg");
+}
+
+.thumb[data-index="3"] {
+  background-image: url("/art/mech-claim.svg");
+}
+
+/* ------------------------------------------------------------------- faq */
+
+.qa {
+  margin: 0;
+  max-width: 74ch;
+}
+
+.qa dt {
+  margin-top: calc(var(--u) * 4);
+}
+
+.qa button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 21px;
+  letter-spacing: 0.02em;
+  color: var(--linen);
+}
+
+.qa button:hover {
+  color: var(--flame);
+}
+
+.brk {
+  color: var(--dusk);
+}
+
+.sign {
+  color: var(--ember);
+  display: inline-block;
+  width: 1ch;
+}
+
+.qa dd {
+  margin: calc(var(--u) * 2) 0 0 4ch;
+  font-size: 16px;
+  color: var(--haze);
+  max-width: 62ch;
+}
+
+/* ---------------------------------------------------------------- footer */
 
 .foot {
-  font-family: var(--display);
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
   text-align: center;
-  padding: calc(var(--step) * 3);
-  border-top: 1px solid var(--slate);
-  color: color-mix(in srgb, var(--linen) 40%, transparent);
+  padding: calc(var(--u) * 20) var(--side) calc(var(--u) * 8);
 }
 
-#miners { color: var(--ember); }
+/*
+ * The oversized mark, cropped by the bottom of the page. Low contrast on
+ * purpose: it is the room's last wall, not a second logo.
+ */
+.watermark {
+  position: absolute;
+  left: 50%;
+  bottom: -0.32em;
+  transform: translateX(-50%);
+  font-family: var(--display);
+  font-size: clamp(96px, 22vw, 200px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #221d33;
+  white-space: nowrap;
+  user-select: none;
+}
 
-/* ---- respect the reader ---- */
+.watermark b {
+  color: #4a2a1c;
+}
+
+.foot-line {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 28px;
+  color: var(--haze);
+  margin: 0;
+}
+
+.foot-line a {
+  color: var(--flame);
+  text-decoration-color: var(--ember);
+  text-underline-offset: 6px;
+}
+
+.foot-fine {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--dusk);
+  margin: calc(var(--u) * 10) 0 0;
+}
+
+#miners {
+  color: var(--ember);
+}
+
+/* --------------------------------------------------------------- reveals */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 500ms ease-out,
+    transform 500ms ease-out;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1024px) {
+  :root {
+    --side: 28px;
+  }
+
+  .nav {
+    gap: calc(var(--u) * 5);
+  }
+
+  .built {
+    display: none;
+  }
+
+  .carousel {
+    min-height: 560px;
+  }
+
+  .thumbs {
+    position: static;
+    margin-top: calc(var(--u) * 10);
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+
+  .section {
+    padding-block: calc(var(--u) * 16);
+  }
+
+  .track {
+    scroll-snap-type: x mandatory;
+    justify-content: flex-start;
+  }
+
+  .node {
+    min-width: 150px;
+  }
+
+  /* The podium becomes a column, strongest first. */
+  .pedestal {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "left"
+      "right"
+      "mini1"
+      "mini2";
+  }
+
+  .slide-art::after {
+    background: rgba(10, 10, 20, 0.72);
+  }
+
+  .slide-copy {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --side: 20px;
+  }
+
+  .term {
+    font-size: 22px;
+  }
+
+  .term::after {
+    height: 18px;
+    width: 9px;
+  }
+
+  /* Four across does not fit; two rows of two do. */
+  .clock {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+    gap: calc(var(--u) * 4) calc(var(--u) * 8);
+  }
+
+  .sep {
+    display: none;
+  }
+
+  .thumb {
+    width: 60px;
+    height: 86px;
+  }
+
+  .qa button {
+    font-size: 19px;
+  }
+}
+
+/* ------------------------------------------------------ respect the reader */
 
 @media (prefers-reduced-motion: reduce) {
-  /* The fire holds a single frame instead of flickering. */
-  [data-state="burning"] .frame { animation: none; }
-  [data-state="burning"] .f1 { opacity: 1; }
-  * { transition-duration: 1ms !important; }
-}
+  html {
+    scroll-behavior: auto;
+  }
 
-@media (max-width: 560px) {
-  .bar { padding: calc(var(--step) * 1.5) calc(var(--step) * 2); }
-  .wordmark { font-size: 19px; }
-  .room { padding-top: calc(var(--step) * 3); }
-  .steps li { grid-template-columns: 1fr; gap: var(--step); }
+  /* The fire holds one frame instead of flickering. */
+  [data-state="burning"] .frame {
+    animation: none;
+  }
+
+  [data-state="burning"] .f1 {
+    opacity: 1;
+  }
+
+  [data-state="burning"] .smoke,
+  .chev-down,
+  .tier-art {
+    animation: none;
+  }
+
+  .term.will-type .term-text {
+    width: auto;
+  }
+
+  .term.will-type.is-visible .term-text {
+    animation: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+  }
 }

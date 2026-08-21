@@ -1,0 +1,29 @@
+<svg viewBox="0 0 960 128"
+     role="img" aria-label="" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <style>.ink-night-deep{fill:#0A0A14}.ink-night-mid{fill:#16142A}.ink-night-soft{fill:#23203D}.ink-dusk{fill:#4A4266}.ink-haze{fill:#9C94BA}.ink-soot{fill:#14131A}.ink-stone{fill:#3A3849}.ink-ember{fill:#FF7A34}.ink-flame{fill:#FFC24A}.ink-linen{fill:#E8E0D2}.ink-bark{fill:#2E2733}.ink-barklit{fill:#6B4A38}.ink-glass{fill:#1C1B33}</style>
+  <defs>
+    <pattern id="d50-night-mid-dusk" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#16142A"/><rect x="0" y="0" width="4" height="4" fill="#4A4266"/><rect x="4" y="4" width="4" height="4" fill="#4A4266"/></pattern>
+  </defs>
+  <rect x="128" y="116" width="88" height="4" fill="#4A4266"/>
+  <rect x="136" y="112" width="72" height="4" fill="#4A4266"/>
+  <rect x="148" y="108" width="48" height="4" fill="#4A4266"/>
+  <rect x="160" y="104" width="24" height="4" fill="#4A4266"/>
+  <rect x="128" y="120" width="88" height="4" fill="url(#d50-night-mid-dusk)"/>
+  <rect x="344" y="104" width="104" height="4" fill="#4A4266"/>
+  <rect x="352" y="100" width="88" height="4" fill="#4A4266"/>
+  <rect x="364" y="96" width="64" height="4" fill="#4A4266"/>
+  <rect x="380" y="92" width="32" height="4" fill="#4A4266"/>
+  <rect x="388" y="88" width="16" height="4" fill="#4A4266"/>
+  <rect x="344" y="108" width="104" height="4" fill="url(#d50-night-mid-dusk)"/>
+  <rect x="540" y="112" width="104" height="4" fill="#4A4266"/>
+  <rect x="548" y="108" width="88" height="4" fill="#4A4266"/>
+  <rect x="560" y="104" width="64" height="4" fill="#4A4266"/>
+  <rect x="576" y="100" width="32" height="4" fill="#4A4266"/>
+  <rect x="584" y="96" width="16" height="4" fill="#4A4266"/>
+  <rect x="540" y="116" width="104" height="4" fill="url(#d50-night-mid-dusk)"/>
+  <rect x="756" y="112" width="64" height="4" fill="#4A4266"/>
+  <rect x="764" y="108" width="48" height="4" fill="#4A4266"/>
+  <rect x="776" y="104" width="24" height="4" fill="#4A4266"/>
+  <rect x="756" y="116" width="64" height="4" fill="url(#d50-night-mid-dusk)"/>
+</svg>

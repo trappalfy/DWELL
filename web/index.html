@@ -4,97 +4,550 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>DWELL — the hearth burns while you're here</title>
-    <meta name="description" content="Hold $DWELL, keep the tab visible, earn tokenized Tesla stock."/>
+    <meta name="description" content="Hold $DWELL, keep the tab visible, earn tokenized Tesla stock on Robinhood Chain."/>
+    <link rel="icon" href="/art/favicon.svg"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Karla:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=VT323&family=Karla:wght@400;500&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/styles.css"/>
   </head>
   <body>
+    <canvas id="sky" class="sky" aria-hidden="true"></canvas>
+    <div class="clouds" aria-hidden="true">
+      <div class="band band-far"></div>
+      <div class="band band-mid"></div>
+      <div class="band band-near"></div>
+    </div>
+    <div class="vignette" aria-hidden="true"></div>
+
     <header class="bar">
-      <span class="wordmark">DWELL</span>
-      <button id="connect" class="button" type="button">Connect wallet</button>
+      <a class="wordmark" href="#top">DWELL</a>
+
+      <nav class="nav" aria-label="Sections">
+        <a href="#pipeline">HOW IT WORKS</a>
+        <a href="#fuel">THE HEARTH</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="bar-end">
+        <span class="built">Built on<br/><b>ROBINHOOD CHAIN</b></span>
+        <button id="connect" class="cta" type="button">
+          <span class="cta-mark" aria-hidden="true"></span>Connect wallet
+        </button>
+      </div>
     </header>
 
-    <main>
-      <section class="room" data-state="cold">
-        <p class="mantel">
-          <span class="mantel-label">Mined</span>
-          <span class="mantel-value" id="mined">0.0000</span>
-          <span class="mantel-unit">TSLA</span>
-        </p>
+    <main id="top">
+      <section class="hero">
+        <h1 class="title">DWEL<span class="title-last">L</span></h1>
+        <p class="tagline">Hold. Stay. Burn.</p>
 
-        <!-- hearth:begin -->
-<svg class="hearth" viewBox="0 0 160 120" role="img"
-     aria-label="A hearth in a dark room" shape-rendering="crispEdges"
+        <div class="stage" id="stage" data-scene="outside" data-state="cold">
+          <!-- art:exterior -->
+<svg class="scene scene-exterior" viewBox="0 0 320 200"
+     role="img" aria-label="A small house at night with one window" shape-rendering="crispEdges"
      xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="firelight" cx="50%" cy="73.33333333333333%" r="55%">
-      <stop offset="0%" class="glow-hot"/>
-      <stop offset="100%" class="glow-out"/>
-    </radialGradient>
+    <pattern id="d25-night-soft-flame" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#23203D"/><rect x="0" y="0" width="4" height="4" fill="#FFC24A"/></pattern>
   </defs>
-
-  <rect x="0" y="0" width="160" height="120" class="wall"/>
-  <rect x="0" y="96" width="160" height="24" class="floor"/>
-  <rect x="0" y="96" width="160" height="1" class="edge"/>
-
-  <rect x="36" y="48" width="88" height="6" class="stone"/>
-  <rect x="44" y="54" width="72" height="42" class="stone-dark"/>
-  <rect x="52" y="60" width="56" height="36" class="opening"/>
-
-  <rect x="62" y="86" width="36" height="4" class="log"/>
-  <rect x="68" y="90" width="24" height="4" class="log"/>
-
-  <g class="fire">
-    <g class="frame f1"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="73" y="76" width="14" height="2" class="fl-outer"/><rect x="77" y="76" width="6" height="2" class="fl-inner"/><rect x="74" y="74" width="12" height="2" class="fl-outer"/><rect x="77" y="74" width="6" height="2" class="fl-inner"/><rect x="75" y="72" width="10" height="2" class="fl-outer"/><rect x="78" y="72" width="4" height="2" class="fl-inner"/><rect x="76" y="70" width="8" height="2" class="fl-outer"/><rect x="78" y="70" width="4" height="2" class="fl-inner"/><rect x="77" y="68" width="6" height="2" class="fl-outer"/><rect x="79" y="68" width="2" height="2" class="fl-inner"/><rect x="78" y="66" width="4" height="2" class="fl-outer"/><rect x="78" y="64" width="4" height="2" class="fl-outer"/><rect x="79" y="62" width="2" height="2" class="fl-outer"/></g>
-    <g class="frame f2"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="71" y="76" width="14" height="2" class="fl-outer"/><rect x="75" y="76" width="6" height="2" class="fl-inner"/><rect x="72" y="74" width="12" height="2" class="fl-outer"/><rect x="75" y="74" width="6" height="2" class="fl-inner"/><rect x="73" y="72" width="10" height="2" class="fl-outer"/><rect x="76" y="72" width="4" height="2" class="fl-inner"/><rect x="72" y="70" width="8" height="2" class="fl-outer"/><rect x="74" y="70" width="4" height="2" class="fl-inner"/><rect x="73" y="68" width="6" height="2" class="fl-outer"/><rect x="75" y="68" width="2" height="2" class="fl-inner"/><rect x="74" y="66" width="4" height="2" class="fl-outer"/><rect x="72" y="64" width="4" height="2" class="fl-outer"/><rect x="73" y="62" width="2" height="2" class="fl-outer"/></g>
-    <g class="frame f3"><rect x="70" y="86" width="20" height="2" class="fl-outer"/><rect x="76" y="86" width="8" height="2" class="fl-inner"/><rect x="70" y="84" width="20" height="2" class="fl-outer"/><rect x="75" y="84" width="10" height="2" class="fl-inner"/><rect x="71" y="82" width="18" height="2" class="fl-outer"/><rect x="75" y="82" width="10" height="2" class="fl-inner"/><rect x="71" y="80" width="18" height="2" class="fl-outer"/><rect x="76" y="80" width="8" height="2" class="fl-inner"/><rect x="72" y="78" width="16" height="2" class="fl-outer"/><rect x="76" y="78" width="8" height="2" class="fl-inner"/><rect x="75" y="76" width="14" height="2" class="fl-outer"/><rect x="79" y="76" width="6" height="2" class="fl-inner"/><rect x="76" y="74" width="12" height="2" class="fl-outer"/><rect x="79" y="74" width="6" height="2" class="fl-inner"/><rect x="77" y="72" width="10" height="2" class="fl-outer"/><rect x="80" y="72" width="4" height="2" class="fl-inner"/><rect x="80" y="70" width="8" height="2" class="fl-outer"/><rect x="82" y="70" width="4" height="2" class="fl-inner"/><rect x="81" y="68" width="6" height="2" class="fl-outer"/><rect x="83" y="68" width="2" height="2" class="fl-inner"/><rect x="82" y="66" width="4" height="2" class="fl-outer"/><rect x="84" y="64" width="4" height="2" class="fl-outer"/><rect x="85" y="62" width="2" height="2" class="fl-outer"/></g>
+  <rect x="260" y="24" width="4" height="4" fill="#9C94BA"/>
+  <rect x="300" y="104" width="4" height="4" fill="#9C94BA"/>
+  <rect x="156" y="68" width="4" height="4" fill="#4A4266"/>
+  <rect x="256" y="60" width="4" height="4" fill="#4A4266"/>
+  <rect x="200" y="148" width="4" height="4" fill="#4A4266"/>
+  <rect x="52" y="48" width="4" height="4" fill="#9C94BA"/>
+  <rect x="280" y="24" width="4" height="4" fill="#4A4266"/>
+  <rect x="96" y="16" width="4" height="4" fill="#9C94BA"/>
+  <rect x="204" y="144" width="4" height="4" fill="#9C94BA"/>
+  <rect x="268" y="64" width="4" height="4" fill="#9C94BA"/>
+  <rect x="56" y="108" width="4" height="4" fill="#4A4266"/>
+  <rect x="204" y="16" width="4" height="4" fill="#9C94BA"/>
+  <rect x="260" y="36" width="4" height="4" fill="#4A4266"/>
+  <rect x="316" y="136" width="4" height="4" fill="#9C94BA"/>
+  <rect x="184" y="56" width="4" height="4" fill="#9C94BA"/>
+  <rect x="40" y="92" width="4" height="4" fill="#4A4266"/>
+  <rect x="264" y="112" width="4" height="4" fill="#9C94BA"/>
+  <rect x="252" y="76" width="4" height="4" fill="#9C94BA"/>
+  <rect x="212" y="84" width="4" height="4" fill="#4A4266"/>
+  <rect x="280" y="36" width="4" height="4" fill="#4A4266"/>
+  <rect x="276" y="0" width="4" height="4" fill="#9C94BA"/>
+  <rect x="112" y="108" width="4" height="4" fill="#9C94BA"/>
+  <rect x="36" y="28" width="4" height="4" fill="#4A4266"/>
+  <rect x="0" y="112" width="4" height="4" fill="#4A4266"/>
+  <rect x="24" y="96" width="4" height="4" fill="#9C94BA"/>
+  <rect x="200" y="12" width="4" height="4" fill="#9C94BA"/>
+  <rect x="32" y="20" width="4" height="4" fill="#4A4266"/>
+  <rect x="92" y="92" width="4" height="4" fill="#4A4266"/>
+  <rect x="188" y="72" width="4" height="4" fill="#4A4266"/>
+  <rect x="304" y="108" width="4" height="4" fill="#4A4266"/>
+  <rect x="220" y="116" width="4" height="4" fill="#4A4266"/>
+  <rect x="216" y="92" width="4" height="4" fill="#9C94BA"/>
+  <rect x="256" y="68" width="4" height="4" fill="#4A4266"/>
+  <rect x="236" y="40" width="4" height="4" fill="#9C94BA"/>
+  <rect x="0" y="184" width="320" height="16" fill="#0A0A14"/>
+  <rect x="0" y="184" width="320" height="4" fill="#23203D"/>
+  <rect x="152" y="56" width="8" height="4" fill="#3A3849"/>
+  <rect x="160" y="56" width="8" height="4" fill="#2E2733"/>
+  <rect x="140" y="60" width="20" height="4" fill="#3A3849"/>
+  <rect x="160" y="60" width="20" height="4" fill="#2E2733"/>
+  <rect x="132" y="64" width="28" height="4" fill="#3A3849"/>
+  <rect x="160" y="64" width="28" height="4" fill="#2E2733"/>
+  <rect x="124" y="68" width="36" height="4" fill="#3A3849"/>
+  <rect x="160" y="68" width="36" height="4" fill="#2E2733"/>
+  <rect x="112" y="72" width="48" height="4" fill="#3A3849"/>
+  <rect x="160" y="72" width="48" height="4" fill="#2E2733"/>
+  <rect x="104" y="76" width="56" height="4" fill="#3A3849"/>
+  <rect x="160" y="76" width="56" height="4" fill="#2E2733"/>
+  <rect x="96" y="80" width="64" height="4" fill="#3A3849"/>
+  <rect x="160" y="80" width="64" height="4" fill="#2E2733"/>
+  <rect x="88" y="84" width="72" height="4" fill="#3A3849"/>
+  <rect x="160" y="84" width="72" height="4" fill="#2E2733"/>
+  <rect x="76" y="88" width="84" height="4" fill="#3A3849"/>
+  <rect x="160" y="88" width="84" height="4" fill="#2E2733"/>
+  <rect x="68" y="92" width="92" height="4" fill="#3A3849"/>
+  <rect x="160" y="92" width="92" height="4" fill="#2E2733"/>
+  <rect x="88" y="96" width="144" height="88" fill="#2E2733"/>
+  <rect x="112" y="96" width="4" height="88" fill="#14131A"/>
+  <rect x="136" y="96" width="4" height="88" fill="#14131A"/>
+  <rect x="160" y="96" width="4" height="88" fill="#14131A"/>
+  <rect x="184" y="96" width="4" height="88" fill="#14131A"/>
+  <rect x="208" y="96" width="4" height="88" fill="#14131A"/>
+  <rect x="168" y="136" width="36" height="48" fill="#14131A"/>
+  <rect x="172" y="140" width="28" height="44" fill="#0A0A14"/>
+  <rect x="192" y="160" width="4" height="4" fill="#4A4266"/>
+  <rect x="108" y="108" width="44" height="44" fill="#14131A"/>
+  <rect x="112" y="112" width="36" height="36" class="pane"/>
+  <rect x="128" y="112" width="4" height="36" fill="#14131A"/>
+  <rect x="112" y="128" width="36" height="4" fill="#14131A"/>
+  <rect x="180" y="40" width="24" height="52" fill="#3A3849"/>
+  <rect x="176" y="36" width="32" height="8" fill="#3A3849"/>
+  <rect x="184" y="44" width="16" height="4" fill="#0A0A14"/>
+  <rect x="12" y="180" width="48" height="4" fill="#0A0A14"/>
+  <rect x="16" y="176" width="40" height="4" fill="#0A0A14"/>
+  <rect x="16" y="172" width="40" height="4" fill="#0A0A14"/>
+  <rect x="16" y="168" width="40" height="4" fill="#0A0A14"/>
+  <rect x="20" y="164" width="32" height="4" fill="#0A0A14"/>
+  <rect x="20" y="160" width="32" height="4" fill="#0A0A14"/>
+  <rect x="20" y="156" width="32" height="4" fill="#0A0A14"/>
+  <rect x="24" y="152" width="24" height="4" fill="#0A0A14"/>
+  <rect x="24" y="148" width="24" height="4" fill="#0A0A14"/>
+  <rect x="24" y="144" width="24" height="4" fill="#0A0A14"/>
+  <rect x="28" y="140" width="16" height="4" fill="#0A0A14"/>
+  <rect x="28" y="136" width="16" height="4" fill="#0A0A14"/>
+  <rect x="32" y="132" width="8" height="4" fill="#0A0A14"/>
+  <rect x="32" y="128" width="8" height="4" fill="#0A0A14"/>
+  <rect x="32" y="124" width="8" height="4" fill="#0A0A14"/>
+  <rect x="32" y="120" width="8" height="4" fill="#0A0A14"/>
+  <rect x="32" y="180" width="8" height="8" fill="#14131A"/>
+  <rect x="260" y="180" width="40" height="4" fill="#0A0A14"/>
+  <rect x="264" y="176" width="32" height="4" fill="#0A0A14"/>
+  <rect x="264" y="172" width="32" height="4" fill="#0A0A14"/>
+  <rect x="264" y="168" width="32" height="4" fill="#0A0A14"/>
+  <rect x="268" y="164" width="24" height="4" fill="#0A0A14"/>
+  <rect x="268" y="160" width="24" height="4" fill="#0A0A14"/>
+  <rect x="268" y="156" width="24" height="4" fill="#0A0A14"/>
+  <rect x="272" y="152" width="16" height="4" fill="#0A0A14"/>
+  <rect x="272" y="148" width="16" height="4" fill="#0A0A14"/>
+  <rect x="276" y="144" width="8" height="4" fill="#0A0A14"/>
+  <rect x="276" y="140" width="8" height="4" fill="#0A0A14"/>
+  <rect x="276" y="136" width="8" height="4" fill="#0A0A14"/>
+  <rect x="276" y="132" width="8" height="4" fill="#0A0A14"/>
+  <rect x="276" y="180" width="8" height="8" fill="#14131A"/>
+  <rect x="244" y="180" width="24" height="4" fill="#0A0A14"/>
+  <rect x="244" y="176" width="24" height="4" fill="#0A0A14"/>
+  <rect x="244" y="172" width="24" height="4" fill="#0A0A14"/>
+  <rect x="248" y="168" width="16" height="4" fill="#0A0A14"/>
+  <rect x="248" y="164" width="16" height="4" fill="#0A0A14"/>
+  <rect x="252" y="160" width="8" height="4" fill="#0A0A14"/>
+  <rect x="252" y="156" width="8" height="4" fill="#0A0A14"/>
+  <rect x="252" y="152" width="8" height="4" fill="#0A0A14"/>
+  <rect x="252" y="148" width="8" height="4" fill="#0A0A14"/>
+  <rect x="252" y="180" width="8" height="8" fill="#14131A"/>
+  <g class="firelight">
+    <rect x="112" y="112" width="36" height="36" class="pane-hot"/>
+    <rect x="100" y="152" width="60" height="16" fill="url(#d25-night-soft-flame)"/>
+    <rect x="92" y="184" width="76" height="12" fill="url(#d25-night-soft-flame)"/>
+    <rect x="176" y="36" width="32" height="8" fill="url(#d25-night-soft-flame)"/>
   </g>
-
-  <rect x="0" y="0" width="160" height="120" fill="url(#firelight)" class="light"
-        shape-rendering="auto"/>
+  <g class="smoke"><rect x="188" y="32" width="8" height="4" fill="#23203D"/><rect x="188" y="28" width="8" height="4" fill="#23203D"/><rect x="188" y="24" width="12" height="4" fill="#23203D"/><rect x="188" y="20" width="12" height="4" fill="#23203D"/><rect x="192" y="16" width="16" height="4" fill="#23203D"/><rect x="196" y="12" width="16" height="4" fill="#23203D"/><rect x="192" y="8" width="20" height="4" fill="#23203D"/><rect x="200" y="4" width="16" height="4" fill="#23203D"/></g>
 </svg>
-        <!-- hearth:end -->
+        <!-- /art:exterior -->
+          <!-- art:interior -->
+<svg class="scene scene-interior" viewBox="0 0 320 200"
+     role="img" aria-label="A hearth burning in a dark room" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="d25-bark-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#2E2733"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d25-night-deep-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#0A0A14"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d25-soot-night-mid" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#14131A"/><rect x="0" y="0" width="4" height="4" fill="#16142A"/></pattern>
+    <pattern id="d25-stone-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#3A3849"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d50-bark-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#2E2733"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/><rect x="4" y="4" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d50-night-deep-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#0A0A14"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/><rect x="4" y="4" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d50-stone-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#3A3849"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/><rect x="4" y="4" width="4" height="4" fill="#FF7A34"/></pattern>
+    <pattern id="d75-bark-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#2E2733"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/><rect x="4" y="4" width="4" height="4" fill="#FF7A34"/><rect x="4" y="0" width="4" height="4" fill="#FF7A34"/></pattern>
+    <radialGradient id="firelight-glow" cx="50%" cy="74%" r="60%"><stop offset="0%" class="glow-hot"/><stop offset="100%" class="glow-out"/></radialGradient>
+  </defs>
+  <rect x="0" y="0" width="320" height="160" fill="#14131A"/>
+  <rect x="0" y="0" width="56" height="48" fill="url(#d25-soot-night-mid)"/>
+  <rect x="264" y="0" width="56" height="48" fill="url(#d25-soot-night-mid)"/>
+  <rect x="0" y="160" width="320" height="40" fill="#2E2733"/>
+  <rect x="0" y="168" width="320" height="4" fill="#14131A"/>
+  <rect x="0" y="180" width="320" height="4" fill="#14131A"/>
+  <rect x="0" y="192" width="320" height="4" fill="#14131A"/>
+  <rect x="100" y="0" width="120" height="56" fill="#3A3849"/>
+  <rect x="80" y="56" width="160" height="8" fill="#3A3849"/>
+  <rect x="80" y="64" width="160" height="4" fill="#14131A"/>
+  <rect x="100" y="68" width="120" height="92" fill="#3A3849"/>
+  <rect x="100" y="84" width="120" height="4" fill="#14131A"/>
+  <rect x="100" y="104" width="120" height="4" fill="#14131A"/>
+  <rect x="100" y="124" width="120" height="4" fill="#14131A"/>
+  <rect x="100" y="144" width="120" height="4" fill="#14131A"/>
+  <rect x="120" y="80" width="80" height="80" fill="#0A0A14"/>
+  <rect x="116" y="76" width="88" height="4" fill="#2E2733"/>
+  <rect x="104" y="160" width="112" height="12" fill="#3A3849"/>
+  <rect x="12" y="148" width="12" height="12" fill="#2E2733"/>
+  <rect x="16" y="152" width="4" height="4" fill="#14131A"/>
+  <rect x="28" y="148" width="12" height="12" fill="#2E2733"/>
+  <rect x="32" y="152" width="4" height="4" fill="#14131A"/>
+  <rect x="44" y="148" width="12" height="12" fill="#2E2733"/>
+  <rect x="48" y="152" width="4" height="4" fill="#14131A"/>
+  <rect x="60" y="148" width="12" height="12" fill="#2E2733"/>
+  <rect x="64" y="152" width="4" height="4" fill="#14131A"/>
+  <rect x="12" y="136" width="12" height="12" fill="#2E2733"/>
+  <rect x="16" y="140" width="4" height="4" fill="#14131A"/>
+  <rect x="28" y="136" width="12" height="12" fill="#2E2733"/>
+  <rect x="32" y="140" width="4" height="4" fill="#14131A"/>
+  <rect x="44" y="136" width="12" height="12" fill="#2E2733"/>
+  <rect x="48" y="140" width="4" height="4" fill="#14131A"/>
+  <rect x="60" y="136" width="12" height="12" fill="#2E2733"/>
+  <rect x="64" y="140" width="4" height="4" fill="#14131A"/>
+  <rect x="20" y="124" width="12" height="12" fill="#2E2733"/>
+  <rect x="24" y="128" width="4" height="4" fill="#14131A"/>
+  <rect x="36" y="124" width="12" height="12" fill="#2E2733"/>
+  <rect x="40" y="128" width="4" height="4" fill="#14131A"/>
+  <rect x="52" y="124" width="12" height="12" fill="#2E2733"/>
+  <rect x="56" y="128" width="4" height="4" fill="#14131A"/>
+  <rect x="248" y="28" width="60" height="72" fill="#2E2733"/>
+  <rect x="252" y="32" width="52" height="64" fill="#1C1B33"/>
+  <rect x="276" y="32" width="4" height="64" fill="#2E2733"/>
+  <rect x="252" y="60" width="52" height="4" fill="#2E2733"/>
+  <rect x="244" y="100" width="68" height="8" fill="#2E2733"/>
+  <rect x="300" y="48" width="4" height="4" fill="#9C94BA"/>
+  <rect x="300" y="32" width="4" height="4" fill="#9C94BA"/>
+  <rect x="260" y="44" width="4" height="4" fill="#9C94BA"/>
+  <rect x="300" y="72" width="4" height="4" fill="#9C94BA"/>
+  <rect x="264" y="88" width="4" height="4" fill="#9C94BA"/>
+  <rect x="284" y="76" width="4" height="4" fill="#9C94BA"/>
+  <rect x="268" y="32" width="4" height="4" fill="#9C94BA"/>
+  <rect x="252" y="132" width="44" height="8" fill="#2E2733"/>
+  <rect x="256" y="140" width="8" height="20" fill="#2E2733"/>
+  <rect x="284" y="140" width="8" height="20" fill="#2E2733"/>
+  <rect x="80" y="176" width="160" height="16" fill="#2E2733"/>
+  <rect x="80" y="176" width="160" height="4" fill="#6B4A38"/>
+  <rect x="132" y="148" width="56" height="8" fill="#2E2733"/>
+  <rect x="144" y="156" width="32" height="4" fill="#2E2733"/>
+  <g class="firelight">
+    <rect x="120" y="128" width="80" height="32" fill="url(#d50-night-deep-ember)"/>
+    <rect x="120" y="104" width="80" height="24" fill="url(#d25-night-deep-ember)"/>
+    <rect x="100" y="136" width="20" height="24" fill="url(#d50-stone-ember)"/>
+    <rect x="200" y="136" width="20" height="24" fill="url(#d50-stone-ember)"/>
+    <rect x="100" y="104" width="20" height="32" fill="url(#d25-stone-ember)"/>
+    <rect x="200" y="104" width="20" height="32" fill="url(#d25-stone-ember)"/>
+    <rect x="104" y="160" width="112" height="12" fill="url(#d50-stone-ember)"/>
+    <rect x="80" y="56" width="160" height="8" fill="url(#d25-stone-ember)"/>
+    <rect x="88" y="172" width="144" height="4" fill="url(#d50-bark-ember)"/>
+    <rect x="80" y="176" width="160" height="8" fill="url(#d50-bark-ember)"/>
+    <rect x="72" y="184" width="176" height="8" fill="url(#d25-bark-ember)"/>
+    <rect x="96" y="192" width="128" height="8" fill="url(#d25-bark-ember)"/>
+    <rect x="100" y="0" width="120" height="24" fill="url(#d25-stone-ember)"/>
+    <rect x="12" y="124" width="12" height="4" fill="url(#d50-bark-ember)"/>
+    <rect x="28" y="124" width="12" height="4" fill="url(#d50-bark-ember)"/>
+    <rect x="44" y="124" width="12" height="4" fill="url(#d50-bark-ember)"/>
+    <rect x="60" y="124" width="12" height="4" fill="url(#d50-bark-ember)"/>
+    <rect x="132" y="148" width="56" height="4" fill="url(#d75-bark-ember)"/>
+  </g>
+  <g class="embers"><rect x="136" y="156" width="48" height="4" class="em-hot"/><rect x="144" y="152" width="32" height="4" class="em-hot"/></g>
+  <g class="fire">
+    <g class="frame f1"><rect x="136" y="144" width="48" height="4" class="fl-outer"/><rect x="136" y="140" width="48" height="4" class="fl-outer"/><rect x="140" y="136" width="44" height="4" class="fl-outer"/><rect x="140" y="132" width="40" height="4" class="fl-outer"/><rect x="144" y="128" width="36" height="4" class="fl-outer"/><rect x="144" y="124" width="32" height="4" class="fl-outer"/><rect x="148" y="120" width="28" height="4" class="fl-outer"/><rect x="148" y="116" width="24" height="4" class="fl-outer"/><rect x="152" y="112" width="20" height="4" class="fl-outer"/><rect x="152" y="108" width="16" height="4" class="fl-outer"/><rect x="156" y="104" width="12" height="4" class="fl-outer"/><rect x="156" y="100" width="8" height="4" class="fl-outer"/><rect x="156" y="96" width="8" height="4" class="fl-outer"/><rect x="160" y="92" width="4" height="4" class="fl-outer"/><rect x="148" y="144" width="24" height="4" class="fl-inner"/><rect x="148" y="140" width="24" height="4" class="fl-inner"/><rect x="152" y="136" width="20" height="4" class="fl-inner"/><rect x="152" y="132" width="20" height="4" class="fl-inner"/><rect x="152" y="128" width="16" height="4" class="fl-inner"/><rect x="152" y="124" width="16" height="4" class="fl-inner"/><rect x="156" y="120" width="12" height="4" class="fl-inner"/><rect x="156" y="116" width="8" height="4" class="fl-inner"/><rect x="156" y="112" width="8" height="4" class="fl-inner"/><rect x="160" y="108" width="4" height="4" class="fl-inner"/></g>
+    <g class="frame f2"><rect x="136" y="144" width="48" height="4" class="fl-outer"/><rect x="136" y="140" width="48" height="4" class="fl-outer"/><rect x="140" y="136" width="44" height="4" class="fl-outer"/><rect x="140" y="132" width="40" height="4" class="fl-outer"/><rect x="144" y="128" width="36" height="4" class="fl-outer"/><rect x="140" y="124" width="32" height="4" class="fl-outer"/><rect x="144" y="120" width="28" height="4" class="fl-outer"/><rect x="144" y="116" width="24" height="4" class="fl-outer"/><rect x="144" y="112" width="20" height="4" class="fl-outer"/><rect x="144" y="108" width="16" height="4" class="fl-outer"/><rect x="148" y="104" width="12" height="4" class="fl-outer"/><rect x="144" y="100" width="8" height="4" class="fl-outer"/><rect x="144" y="96" width="8" height="4" class="fl-outer"/><rect x="148" y="92" width="4" height="4" class="fl-outer"/><rect x="148" y="144" width="24" height="4" class="fl-inner"/><rect x="148" y="140" width="24" height="4" class="fl-inner"/><rect x="152" y="136" width="20" height="4" class="fl-inner"/><rect x="152" y="132" width="20" height="4" class="fl-inner"/><rect x="152" y="128" width="16" height="4" class="fl-inner"/><rect x="148" y="124" width="16" height="4" class="fl-inner"/><rect x="152" y="120" width="12" height="4" class="fl-inner"/><rect x="152" y="116" width="8" height="4" class="fl-inner"/><rect x="148" y="112" width="8" height="4" class="fl-inner"/><rect x="152" y="108" width="4" height="4" class="fl-inner"/></g>
+    <g class="frame f3"><rect x="136" y="144" width="48" height="4" class="fl-outer"/><rect x="136" y="140" width="48" height="4" class="fl-outer"/><rect x="140" y="136" width="44" height="4" class="fl-outer"/><rect x="140" y="132" width="40" height="4" class="fl-outer"/><rect x="144" y="128" width="36" height="4" class="fl-outer"/><rect x="148" y="124" width="32" height="4" class="fl-outer"/><rect x="152" y="120" width="28" height="4" class="fl-outer"/><rect x="152" y="116" width="24" height="4" class="fl-outer"/><rect x="160" y="112" width="20" height="4" class="fl-outer"/><rect x="160" y="108" width="16" height="4" class="fl-outer"/><rect x="164" y="104" width="12" height="4" class="fl-outer"/><rect x="168" y="100" width="8" height="4" class="fl-outer"/><rect x="168" y="96" width="8" height="4" class="fl-outer"/><rect x="172" y="92" width="4" height="4" class="fl-outer"/><rect x="148" y="144" width="24" height="4" class="fl-inner"/><rect x="148" y="140" width="24" height="4" class="fl-inner"/><rect x="152" y="136" width="20" height="4" class="fl-inner"/><rect x="152" y="132" width="20" height="4" class="fl-inner"/><rect x="152" y="128" width="16" height="4" class="fl-inner"/><rect x="156" y="124" width="16" height="4" class="fl-inner"/><rect x="160" y="120" width="12" height="4" class="fl-inner"/><rect x="160" y="116" width="8" height="4" class="fl-inner"/><rect x="164" y="112" width="8" height="4" class="fl-inner"/><rect x="168" y="108" width="4" height="4" class="fl-inner"/></g>
+  </g>
+    <rect x="0" y="0" width="320" height="200" fill="url(#firelight-glow)" class="glow" shape-rendering="auto"/>
+</svg>
+        <!-- /art:interior -->
+        </div>
+
+        <p class="readout" id="readout" hidden>
+          <span class="readout-label">Mined</span>
+          <span class="readout-value" id="mined">0.0000</span>
+          <span class="readout-unit">TSLA</span>
+        </p>
 
         <p class="status" id="status">The hearth is cold. Connect a wallet to light it.</p>
 
         <div class="actions">
-          <button id="claim" class="button button-warm" type="button" hidden>Claim</button>
+          <button id="claim" class="cta cta-warm" type="button" hidden>Claim</button>
+        </div>
+
+        <p class="blurb">
+          A hearth that burns only while someone sits by it. Hold $DWELL, keep this tab
+          open, and every five minutes the protocol writes you a share of tokenized Tesla
+          stock. Nothing is deposited and nothing is locked — your tokens never leave your
+          wallet, and the protocol can only read the balance, never move it. Step away and
+          the fire banks: it costs the reserve nothing and waits for you to come back.
+        </p>
+
+        <a class="scroll-hint" href="#countdown" aria-label="Read on">
+          <span class="chev-down" aria-hidden="true"></span>
+        </a>
+      </section>
+
+      <section class="countdown" id="countdown" aria-labelledby="countdown-lead">
+        <p class="countdown-lead" id="countdown-lead">Next settlement in</p>
+        <div class="clock" id="clock">
+          <span class="unit"><b id="cd-h">--</b><i>HOURS</i></span>
+          <span class="sep">:</span>
+          <span class="unit"><b id="cd-m">--</b><i>MINUTES</i></span>
+          <span class="sep">:</span>
+          <span class="unit"><b id="cd-s">--</b><i>SECONDS</i></span>
+        </div>
+        <p class="countdown-note" id="countdown-note">Waiting for the first reading.</p>
+      </section>
+
+      <section class="section" id="pipeline" aria-labelledby="pipeline-h">
+        <h2 class="term" id="pipeline-h" style="--chars: 19">
+          <span class="term-text"><span class="sigil">$</span> <span class="cmd">cat</span> HEARTBEAT.log</span>
+        </h2>
+        <p class="section-lede">
+          What happens between leaving this tab open and being able to claim.
+        </p>
+
+        <div class="timeline">
+          <button class="chev chev-left" type="button" aria-label="Earlier steps"></button>
+          <ol class="track" id="track">
+            <li class="node">
+              <span class="node-at">0s</span>
+              <span class="node-when">your tab</span>
+              <span class="node-dot" aria-hidden="true"></span>
+              <span class="node-what">Heartbeat</span>
+            </li>
+            <li class="node">
+              <span class="node-at">10s</span>
+              <span class="node-when">bucket closes</span>
+              <span class="node-dot" aria-hidden="true"></span>
+              <span class="node-what">Presence recorded</span>
+            </li>
+            <li class="node">
+              <span class="node-at">5m</span>
+              <span class="node-when">epoch settles</span>
+              <span class="node-dot" aria-hidden="true"></span>
+              <span class="node-what">Share computed</span>
+            </li>
+            <li class="node">
+              <span class="node-at">30m</span>
+              <span class="node-when">root published</span>
+              <span class="node-dot" aria-hidden="true"></span>
+              <span class="node-what">Written on-chain</span>
+            </li>
+            <li class="node">
+              <span class="node-at">+5m</span>
+              <span class="node-when">root matures</span>
+              <span class="node-dot" aria-hidden="true"></span>
+              <span class="node-what">Claimable</span>
+            </li>
+          </ol>
+          <button class="chev chev-right" type="button" aria-label="Later steps"></button>
         </div>
       </section>
 
-      <section class="prose">
-        <h1>Keep this open.<br/>The hearth burns while you're here.</h1>
-        <p class="lede">
-          Hold $DWELL, leave the tab visible, and earn tokenized Tesla stock.
-          Nothing is deposited — your tokens never leave your wallet.
-        </p>
+      <section class="section" id="fuel" aria-labelledby="fuel-h">
+        <h2 class="term" id="fuel-h" style="--chars: 15">
+          <span class="term-text"><span class="sigil">$</span> <span class="cmd">vi</span> HEARTH.yml</span>
+        </h2>
+        <p class="section-lede">Every number here is read live from the chain.</p>
 
-        <ol class="steps">
-          <li>
-            <h2>Hold</h2>
-            <p>Keep at least <span id="min-balance">100,000</span> $DWELL in your wallet. The protocol only reads your balance; it can never move it.</p>
-          </li>
-          <li>
-            <h2>Stay</h2>
-            <p>Leave this tab visible. Every ten seconds the hearth notes you're still here. Switch away and it stops counting.</p>
-          </li>
-          <li>
-            <h2>Claim</h2>
-            <p>Rewards build up in TSLA and never expire. Claim whenever you like — one claim collects everything owed.</p>
-          </li>
-        </ol>
+        <div class="pedestal">
+          <div class="tier tier-main">
+            <img class="tier-art" src="/art/log-large.svg" width="56" height="56" alt="" aria-hidden="true"/>
+            <span class="tier-label">In the hearth</span>
+            <span class="tier-value" id="f-vault">—</span>
+          </div>
 
-        <p class="aside">
-          The fire only burns while someone tends it. When nobody is here,
-          nothing is spent — the reserve simply waits.
+          <div class="tier tier-side tier-left">
+            <img class="tier-art" src="/art/log-small.svg" width="40" height="40" alt="" aria-hidden="true"/>
+            <span class="tier-label">Released</span>
+            <span class="tier-value tier-value-warm" id="f-released">—</span>
+          </div>
+
+          <div class="tier tier-side tier-right">
+            <img class="tier-art" src="/art/log-small.svg" width="40" height="40" alt="" aria-hidden="true"/>
+            <span class="tier-label">Claimed</span>
+            <span class="tier-value tier-value-cool" id="f-claimed">—</span>
+          </div>
+
+          <div class="tier tier-mini tier-mini-1">
+            <img class="tier-art" src="/art/kindling.svg" width="24" height="24" alt="" aria-hidden="true"/>
+            <span class="tier-label">Tending now</span>
+            <span class="tier-value" id="f-miners">—</span>
+          </div>
+
+          <div class="tier tier-mini tier-mini-2">
+            <img class="tier-art" src="/art/kindling.svg" width="24" height="24" alt="" aria-hidden="true"/>
+            <span class="tier-label">Epoch</span>
+            <span class="tier-value" id="f-epoch">—</span>
+          </div>
+        </div>
+
+        <p class="footnote">
+          * The hearth refills only from trading fees on $DWELL. If trading stops, the fire goes out.
         </p>
+      </section>
+
+      <section class="section mechanics" id="mechanics" aria-labelledby="mech-h">
+        <h2 class="term" id="mech-h" style="--chars: 17">
+          <span class="term-text"><span class="sigil">$</span> <span class="cmd">ls</span> -a MECHANICS</span>
+        </h2>
+
+        <div class="carousel" id="carousel" data-slide="0">
+          <div class="slide-art" aria-hidden="true">
+            <span class="art art-0"></span>
+            <span class="art art-1"></span>
+            <span class="art art-2"></span>
+            <span class="art art-3"></span>
+          </div>
+
+          <div class="slide-copy">
+            <h3 class="slide-name" id="slide-name">HOLD</h3>
+            <p class="slide-text" id="slide-text">
+              Your wallet balance is the whole rig. Keep 100,000 $DWELL and the protocol
+              counts you in. It reads your balance and can never move it: no deposit, no
+              lockup, no withdrawal queue.
+            </p>
+          </div>
+
+          <div class="thumbs">
+            <button class="chev chev-left" type="button" data-step="-1" aria-label="Previous"></button>
+            <button class="thumb is-active" type="button" data-index="0" aria-label="Hold"></button>
+            <button class="thumb" type="button" data-index="1" aria-label="Tend"></button>
+            <button class="thumb" type="button" data-index="2" aria-label="Burn"></button>
+            <button class="thumb" type="button" data-index="3" aria-label="Claim"></button>
+            <button class="chev chev-right" type="button" data-step="1" aria-label="Next"></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="faq-h">
+        <h2 class="term" id="faq-h" style="--chars: 7">
+          <span class="term-text"><span class="sigil">$</span> <span class="cmd">./FAQ</span></span>
+        </h2>
+
+        <dl class="qa" id="qa">
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a1">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              What do I actually have to do?
+            </button>
+          </dt>
+          <dd id="a1" hidden>
+            Hold at least 100,000 $DWELL and leave this page open in a visible tab. That is
+            the whole job. There is no transaction to send until you decide to claim.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a2">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              Do I deposit or lock anything?
+            </button>
+          </dt>
+          <dd id="a2" hidden>
+            No. The protocol reads your balance and has no permission to move it. Your
+            tokens stay in your wallet and you can sell them at any moment — you simply
+            stop being counted once you fall below the threshold.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a3">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              Where do the rewards come from?
+            </button>
+          </dt>
+          <dd id="a3" hidden>
+            From creator fees on $DWELL trades. The protocol collects them, swaps them
+            on-chain into tokenized Tesla stock, and sends that into the vault. Rewards are
+            paid in TSLA, not in more $DWELL.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a4">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              What happens if I close the tab?
+            </button>
+          </dt>
+          <dd id="a4" hidden>
+            Counting stops immediately — hiding the tab is enough. Nothing already earned is
+            lost, and nothing new accrues until you come back. The reserve is not spent
+            while nobody is here.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a5">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              Why does the reward shrink over time?
+            </button>
+          </dt>
+          <dd id="a5" hidden>
+            Each settled epoch releases a fixed fraction of whatever is still unspent, so
+            the early hours pay far more than the later ones. The reserve is designed to
+            thin out rather than to run dry on a fixed date.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a6">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              Has this been audited?
+            </button>
+          </dt>
+          <dd id="a6" hidden>
+            No. There is one admin key and no multisig. That key can pause claims and set
+            who is allowed to publish; it cannot rewrite what you have already earned, and
+            it cannot reach your wallet. Treat this as what it is — a small, new protocol.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a7">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              Can the protocol take my tokens?
+            </button>
+          </dt>
+          <dd id="a7" hidden>
+            No. The vault holds only the reward asset and pays out against a published
+            Merkle root. It has never been granted an allowance on your $DWELL and cannot
+            ask for one from this page.
+          </dd>
+
+          <dt>
+            <button type="button" aria-expanded="false" aria-controls="a8">
+              <span class="brk">[</span><span class="sign">+</span><span class="brk">]</span>
+              What happens when the reserve runs out?
+            </button>
+          </dt>
+          <dd id="a8" hidden>
+            It refills only from trading fees. If nobody trades $DWELL, no fees arrive, and
+            the fire goes out. Anything already credited to you stays claimable forever.
+          </dd>
+        </dl>
       </section>
     </main>
 
     <footer class="foot">
-      <span id="miners">—</span> tending the fire now
+      <span class="watermark" aria-hidden="true">DWEL<b>L</b></span>
+      <p class="foot-line">
+        Want in? <a href="https://x.com/dwellprotocol" rel="noopener">Come sit by the fire.</a>
+      </p>
+      <p class="foot-fine">
+        <span id="miners">—</span> tending the fire now · © 2026 DWELL · Not investment advice ·
+        Not affiliated with Tesla, Inc. or Robinhood Markets, Inc.
+      </p>
     </footer>
 
     <script type="module" src="/app.js"></script>

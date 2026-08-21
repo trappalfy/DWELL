@@ -1,4 +1,6 @@
 import { encodeClaim } from "/lib/abi.js";
+import { startAtmosphere } from "/lib/atmosphere.js";
+import { armReveals, armTypewriters, wireAccordion, wireCarousel, wireTimeline } from "/lib/ui.js";
 
 const CHAIN_ID = 4663;
 const CHAIN_ID_HEX = "0x1237";
@@ -6,13 +8,23 @@ const HEARTBEAT_MS = 10_000;
 const REFRESH_MS = 30_000;
 
 const els = {
-  room: document.querySelector(".room"),
+  stage: document.getElementById("stage"),
   connect: document.getElementById("connect"),
   claim: document.getElementById("claim"),
   status: document.getElementById("status"),
+  readout: document.getElementById("readout"),
   mined: document.getElementById("mined"),
   miners: document.getElementById("miners"),
-  minBalance: document.getElementById("min-balance")
+  countdown: document.getElementById("countdown"),
+  note: document.getElementById("countdown-note"),
+  clock: { h: document.getElementById("cd-h"), m: document.getElementById("cd-m"), s: document.getElementById("cd-s") },
+  fuel: {
+    vault: document.getElementById("f-vault"),
+    released: document.getElementById("f-released"),
+    claimed: document.getElementById("f-claimed"),
+    miners: document.getElementById("f-miners"),
+    epoch: document.getElementById("f-epoch")
+  }
 };
 
 const state = {
@@ -20,8 +32,11 @@ const state = {
   account: null,
   token: null,
   me: null,
+  stats: null,
   tendedSince: null,
-  notice: null
+  notice: null,
+  /** Seconds to the next settlement, and when that figure was true. */
+  countdown: null
 };
 
 /* ---------- formatting ---------- */
@@ -35,11 +50,18 @@ function formatUnits(value, decimals, places) {
   return places > 0 ? grouped + "." + fraction : grouped;
 }
 
+/** A chain reading that failed shows a dash, never a zero that would be a lie. */
+function formatOrDash(value, places = 4) {
+  return value === null || value === undefined ? "—" : formatUnits(BigInt(value), 18, places);
+}
+
 function shortDuration(ms) {
   const minutes = Math.floor(ms / 60000);
   if (minutes < 60) return minutes + "m";
   return Math.floor(minutes / 60) + "h " + (minutes % 60) + "m";
 }
+
+const pad2 = (n) => String(n).padStart(2, "0");
 
 /* ---------- api ---------- */
 
@@ -162,19 +184,60 @@ async function beat() {
 
 async function refresh() {
   try {
-    const stats = await api("/v1/stats");
-    els.miners.textContent = String(stats.activeMiners);
+    state.stats = await api("/v1/stats");
+    readCountdown();
+    renderStats();
   } catch {
-    /* the counter is decoration; a failed poll must not disturb the page */
+    /* the figures are a readout, not a gate; a failed poll must not disturb the page */
   }
 
-  if (!state.account) return;
-  try {
-    state.me = await api("/v1/me?account=" + state.account);
-  } catch {
-    /* keep the last known figures rather than blanking them */
+  if (state.account) {
+    try {
+      state.me = await api("/v1/me?account=" + state.account);
+    } catch {
+      /* keep the last known figures rather than blanking them */
+    }
   }
   render();
+}
+
+/* ---------- the countdown ---------- */
+
+/**
+ * Turns the publisher's own condition into seconds.
+ *
+ * The worker publishes once six epochs have settled since the last root, so
+ * the wait is those remaining epochs less however far into the current one
+ * the server already is. Server time is used rather than the browser's, so a
+ * skewed local clock cannot make the page disagree with the protocol.
+ */
+function readCountdown() {
+  const stats = state.stats;
+  const epoch = state.config?.epochSeconds;
+  if (!stats || !epoch || typeof stats.serverTime !== "number") return;
+
+  const intoEpoch = stats.serverTime % epoch;
+  const seconds = Math.max(0, stats.epochsUntilPublish * epoch - intoEpoch);
+  state.countdown = { seconds, at: Date.now() };
+}
+
+function tickClock() {
+  if (!state.countdown) return;
+
+  const elapsed = (Date.now() - state.countdown.at) / 1000;
+  const left = Math.max(0, Math.floor(state.countdown.seconds - elapsed));
+
+  els.clock.h.textContent = pad2(Math.floor(left / 3600));
+  els.clock.m.textContent = pad2(Math.floor((left % 3600) / 60));
+  els.clock.s.textContent = pad2(left % 60);
+
+  const idle = (state.stats?.activeMiners ?? 0) === 0;
+  els.countdown.classList.toggle("is-out", idle);
+  els.note.textContent = idle
+    ? "Nobody is tending the fire. This settlement will carry nothing."
+    : left === 0
+      ? "Settling now. The root goes on-chain, then matures for five minutes."
+      : "When this reaches zero, what you have mined is written on-chain.";
 }
 
 /* ---------- the fire is the status ---------- */
@@ -206,10 +269,27 @@ function statusLine(mode) {
   return "The hearth is burning. Tended " + shortDuration(Date.now() - state.tendedSince) + ".";
 }
 
+function renderStats() {
+  const stats = state.stats;
+  if (!stats) return;
+
+  els.miners.textContent = String(stats.activeMiners);
+  els.fuel.miners.textContent = String(stats.activeMiners);
+  els.fuel.epoch.textContent = String(stats.currentEpoch);
+  els.fuel.vault.textContent = formatOrDash(stats.vaultBalance);
+  els.fuel.released.textContent = formatOrDash(stats.totalReleased);
+  els.fuel.claimed.textContent = formatOrDash(stats.totalClaimed);
+}
+
 function render() {
   const mode = currentState();
-  els.room.dataset.state = mode;
+  els.stage.dataset.state = mode;
+  // Connecting is what carries you over the threshold, not being eligible:
+  // someone short of the balance is still inside, looking at a cold hearth.
+  els.stage.dataset.scene = state.account ? "inside" : "outside";
   els.status.textContent = statusLine(mode);
+
+  els.readout.hidden = !state.account;
 
   if (state.me) {
     els.mined.textContent = formatUnits(BigInt(state.me.cumulative), 18, 4);
@@ -228,8 +308,20 @@ function render() {
 /* ---------- start ---------- */
 
 async function start() {
-  state.config = await api("/v1/config");
-  els.minBalance.textContent = formatUnits(BigInt(state.config.minBalance), 18, 0);
+  armReveals();
+  armTypewriters();
+  wireAccordion(document.getElementById("qa"));
+  wireCarousel(document.getElementById("carousel"));
+  wireTimeline(document.getElementById("pipeline"));
+
+  startAtmosphere({
+    canvas: document.getElementById("sky"),
+    bands: [
+      { element: document.querySelector(".band-far"), rate: 0.25 },
+      { element: document.querySelector(".band-mid"), rate: 0.45 },
+      { element: document.querySelector(".band-near"), rate: 0.7 }
+    ]
+  });
 
   els.connect.addEventListener("click", async () => {
     els.connect.disabled = true;
@@ -261,11 +353,13 @@ async function start() {
 
   setInterval(beat, HEARTBEAT_MS);
   setInterval(refresh, REFRESH_MS);
+  setInterval(tickClock, 1000);
   // Keeps the "tended" duration honest without re-fetching anything.
   setInterval(() => {
     if (currentState() === "burning") render();
-  }, 30000);
+  }, 30_000);
 
+  state.config = await api("/v1/config");
   await refresh();
   render();
 }

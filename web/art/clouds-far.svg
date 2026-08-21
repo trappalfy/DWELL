@@ -1,0 +1,37 @@
+<svg viewBox="0 0 960 128"
+     role="img" aria-label="" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <style>.ink-night-deep{fill:#0A0A14}.ink-night-mid{fill:#16142A}.ink-night-soft{fill:#23203D}.ink-dusk{fill:#4A4266}.ink-haze{fill:#9C94BA}.ink-soot{fill:#14131A}.ink-stone{fill:#3A3849}.ink-ember{fill:#FF7A34}.ink-flame{fill:#FFC24A}.ink-linen{fill:#E8E0D2}.ink-bark{fill:#2E2733}.ink-barklit{fill:#6B4A38}.ink-glass{fill:#1C1B33}</style>
+  <defs>
+    <pattern id="d50-night-mid-night-soft" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#16142A"/><rect x="0" y="0" width="4" height="4" fill="#23203D"/><rect x="4" y="4" width="4" height="4" fill="#23203D"/></pattern>
+  </defs>
+  <rect x="72" y="100" width="104" height="4" fill="#23203D"/>
+  <rect x="80" y="96" width="88" height="4" fill="#23203D"/>
+  <rect x="92" y="92" width="64" height="4" fill="#23203D"/>
+  <rect x="108" y="88" width="32" height="4" fill="#23203D"/>
+  <rect x="116" y="84" width="16" height="4" fill="#23203D"/>
+  <rect x="72" y="104" width="104" height="4" fill="url(#d50-night-mid-night-soft)"/>
+  <rect x="260" y="80" width="104" height="4" fill="#23203D"/>
+  <rect x="268" y="76" width="88" height="4" fill="#23203D"/>
+  <rect x="280" y="72" width="64" height="4" fill="#23203D"/>
+  <rect x="296" y="68" width="32" height="4" fill="#23203D"/>
+  <rect x="304" y="64" width="16" height="4" fill="#23203D"/>
+  <rect x="260" y="84" width="104" height="4" fill="url(#d50-night-mid-night-soft)"/>
+  <rect x="352" y="92" width="120" height="4" fill="#23203D"/>
+  <rect x="360" y="88" width="104" height="4" fill="#23203D"/>
+  <rect x="372" y="84" width="80" height="4" fill="#23203D"/>
+  <rect x="384" y="80" width="56" height="4" fill="#23203D"/>
+  <rect x="396" y="76" width="32" height="4" fill="#23203D"/>
+  <rect x="352" y="96" width="120" height="4" fill="url(#d50-night-mid-night-soft)"/>
+  <rect x="560" y="92" width="120" height="4" fill="#23203D"/>
+  <rect x="568" y="88" width="104" height="4" fill="#23203D"/>
+  <rect x="580" y="84" width="80" height="4" fill="#23203D"/>
+  <rect x="592" y="80" width="56" height="4" fill="#23203D"/>
+  <rect x="604" y="76" width="32" height="4" fill="#23203D"/>
+  <rect x="560" y="96" width="120" height="4" fill="url(#d50-night-mid-night-soft)"/>
+  <rect x="672" y="84" width="88" height="4" fill="#23203D"/>
+  <rect x="680" y="80" width="72" height="4" fill="#23203D"/>
+  <rect x="692" y="76" width="48" height="4" fill="#23203D"/>
+  <rect x="704" y="72" width="24" height="4" fill="#23203D"/>
+  <rect x="672" y="88" width="88" height="4" fill="url(#d50-night-mid-night-soft)"/>
+</svg>

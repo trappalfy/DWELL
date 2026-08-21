@@ -1,0 +1,10 @@
+<svg viewBox="0 0 480 200"
+     role="img" aria-label="" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <style>.ink-night-deep{fill:#0A0A14}.ink-night-mid{fill:#16142A}.ink-night-soft{fill:#23203D}.ink-dusk{fill:#4A4266}.ink-haze{fill:#9C94BA}.ink-soot{fill:#14131A}.ink-stone{fill:#3A3849}.ink-ember{fill:#FF7A34}.ink-flame{fill:#FFC24A}.ink-linen{fill:#E8E0D2}.ink-bark{fill:#2E2733}.ink-barklit{fill:#6B4A38}.ink-glass{fill:#1C1B33}</style>
+  <defs>
+    <pattern id="d25-night-mid-night-soft" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#16142A"/><rect x="0" y="0" width="4" height="4" fill="#23203D"/></pattern>
+    <pattern id="d25-soot-ember" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#14131A"/><rect x="0" y="0" width="4" height="4" fill="#FF7A34"/></pattern>
+  </defs>
+  <rect x="0" y="176" width="480" height="24" fill="#0A0A14"/><rect x="0" y="176" width="480" height="4" fill="#23203D"/><rect x="0" y="152" width="480" height="24" fill="url(#d25-night-mid-night-soft)"/><rect x="256" y="88" width="176" height="24" fill="url(#d25-soot-ember)"/><rect x="280" y="160" width="128" height="8" fill="#3A3849"/><rect x="312" y="152" width="64" height="4" fill="#FF7A34"/><rect x="312" y="148" width="64" height="4" fill="#FF7A34"/><rect x="316" y="144" width="56" height="4" fill="#FF7A34"/><rect x="320" y="140" width="48" height="4" fill="#FFC24A"/><rect x="324" y="140" width="40" height="4" fill="#E8E0D2"/>
+</svg>

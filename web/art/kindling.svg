@@ -1,0 +1,9 @@
+<svg viewBox="0 0 24 24"
+     role="img" aria-label="" shape-rendering="crispEdges"
+     xmlns="http://www.w3.org/2000/svg">
+  <style>.ink-night-deep{fill:#0A0A14}.ink-night-mid{fill:#16142A}.ink-night-soft{fill:#23203D}.ink-dusk{fill:#4A4266}.ink-haze{fill:#9C94BA}.ink-soot{fill:#14131A}.ink-stone{fill:#3A3849}.ink-ember{fill:#FF7A34}.ink-flame{fill:#FFC24A}.ink-linen{fill:#E8E0D2}.ink-bark{fill:#2E2733}.ink-barklit{fill:#6B4A38}.ink-glass{fill:#1C1B33}</style>
+  <defs>
+    <pattern id="d50-bark-barklit" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#2E2733"/><rect x="0" y="0" width="4" height="4" fill="#6B4A38"/><rect x="4" y="4" width="4" height="4" fill="#6B4A38"/></pattern>
+  </defs>
+  <rect x="4" y="0" width="16" height="4" fill="#2E2733"/><rect x="0" y="4" width="24" height="4" fill="#2E2733"/><rect x="0" y="8" width="24" height="4" fill="#2E2733"/><rect x="0" y="12" width="24" height="4" fill="#2E2733"/><rect x="0" y="16" width="24" height="4" fill="#2E2733"/><rect x="4" y="20" width="16" height="4" fill="#2E2733"/><rect x="8" y="8" width="8" height="8" fill="url(#d50-bark-barklit)"/><rect x="8" y="8" width="8" height="8" fill="#14131A"/>
+</svg>

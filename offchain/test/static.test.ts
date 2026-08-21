@@ -58,11 +58,14 @@ test("шрифты отдаются с типом, который браузер
   // Гарнитуры лежат у нас, а не на чужом CDN. Неверный content-type для
   // шрифта — это молчаливый откат на запасную гарнитуру, а не ошибка.
   const dir = mkdtempSync(join(tmpdir(), "dwell-fonts-"));
-  writeFileSync(join(dir, "pb-pixel.ttf"), Buffer.from([0x00, 0x01, 0x00, 0x00]));
+  const expected = { "akedopikuseru.otf": "font/otf", "some-face.ttf": "font/ttf" };
 
-  const hit = resolveStaticFile(dir, "/pb-pixel.ttf");
-  assert.ok(hit, "шрифт не отдан");
-  assert.equal(hit.contentType, "font/ttf");
+  for (const [name, contentType] of Object.entries(expected)) {
+    writeFileSync(join(dir, name), Buffer.from([0x4f, 0x54, 0x54, 0x4f]));
+    const hit = resolveStaticFile(dir, "/" + name);
+    assert.ok(hit, `шрифт не отдан: ${name}`);
+    assert.equal(hit.contentType, contentType);
+  }
 
   rmSync(dir, { recursive: true, force: true });
 });

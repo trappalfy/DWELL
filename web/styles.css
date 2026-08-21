@@ -15,22 +15,26 @@
 /* ------------------------------------------------------------------ faces */
 
 /*
- * Served by our own process from web/fonts, not by a font CDN: the page
- * already avoids third-party requests, and both files are single-digit
- * kilobytes. swap keeps text readable while they load.
+ * Served by our own process from web/fonts, not by a font CDN, and preloaded
+ * from the page head so the swap happens early.
+ *
+ * The three overrides below are the important part. Browsers disagree about
+ * which of a font's several vertical metrics to believe — Windows reads one
+ * pair, macOS another — and this face states them 200 units apart, so the
+ * baseline would land in a different place on each platform. Stating them
+ * here settles it: the cap height is exactly one em, the descender exactly
+ * one design pixel below the baseline, no line gap. Every line box is then a
+ * whole number of pixels tall on every machine, which is the whole point of
+ * using a pixel face.
  */
 @font-face {
-  font-family: "Koganejidainogemu";
-  src: url("/fonts/koganejidainogemu.ttf") format("truetype");
+  font-family: "Akedopikuseru";
+  src: url("/fonts/akedopikuseru.otf") format("opentype");
   font-weight: 400;
   font-display: swap;
-}
-
-@font-face {
-  font-family: "PB Pixel";
-  src: url("/fonts/pb-pixel.ttf") format("truetype");
-  font-weight: 400;
-  font-display: swap;
+  ascent-override: 100%;
+  descent-override: 14.2857%;
+  line-gap-override: 0%;
 }
 
 :root {
@@ -51,18 +55,36 @@
   --glass: #1c1b33;
 
   /*
-   * Three faces, three jobs.
+   * Two faces, two jobs: pixel where the text labels something, Karla where
+   * the text is actually read. A pixel face is drawn for one size and comes
+   * apart in a paragraph, so it never sets running prose here.
    *
-   * The split is not decorative: a bitmap face is drawn for one pixel size,
-   * so it holds a heading and falls apart in a footnote. Pixel where the
-   * text labels something, Karla where the text is actually read.
-   *
-   * Both pixel faces are self-hosted from web/fonts. The fallbacks behind
-   * them keep the page correct if a file is ever missing.
+   * The fallback is a monospace rather than another pixel face on purpose —
+   * the terminal headings depend on columns lining up, and a proportional
+   * stand-in would break them the moment the file failed to load.
    */
-  --display: "Koganejidainogemu", "Pixelify Sans", ui-monospace, monospace;
-  --pixel: "PB Pixel", "Silkscreen", ui-monospace, monospace;
+  --pixel: "Akedopikuseru", ui-monospace, monospace;
   --body: "Karla", system-ui, -apple-system, sans-serif;
+
+  /*
+   * The seven-pixel grid.
+   *
+   * Akedopikuseru is an arcade face drawn in an eight-by-eight cell: the
+   * letters fill seven pixels and the eighth is the gap that separates them.
+   * Its em is those seven pixels, so one design pixel is exactly 1/7 em and
+   * the face is crisp only at font sizes that are whole multiples of 7 —
+   * 14, 21, 28, 35, 42, 63, 84. Every size on this page is one of those.
+   * Do not make the type fluid: a clamp() lands between steps at nearly
+   * every viewport width, and every letter goes soft.
+   *
+   * --px-gap is that one design pixel expressed as tracking. Letter-spacing
+   * is either 0 or a multiple of it; anything else pushes letters off grid.
+   * The line heights are 8/7 and 10/7 of the size, which land on whole
+   * pixels precisely because the size is a multiple of 7.
+   */
+  --px-gap: 0.142857em;
+  --lh-pixel: 1.142857;
+  --lh-label: 1.428571;
 
   /* Everything spaces off four pixels, so nothing lands between art pixels. */
   --u: 4px;
@@ -90,6 +112,12 @@ body {
   line-height: 1.65;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /*
+   * The pixel face ships one weight. Without this a stray bold would be
+   * faked by smearing the glyph sideways, which on hard pixel edges reads
+   * as a rendering fault rather than as emphasis.
+   */
+  font-synthesis: none;
 }
 
 /*
@@ -232,11 +260,11 @@ a {
 }
 
 .wordmark {
-  font-family: var(--display);
-  font-size: 32px;
+  font-family: var(--pixel);
+  font-size: 21px;
   /* Never above 400: the face ships one Regular, and anything more is faked. */
   font-weight: 400;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--px-gap);
   text-decoration: none;
   color: var(--linen);
 }
@@ -248,8 +276,8 @@ a {
 
 .nav a {
   font-family: var(--pixel);
-  font-size: 19px;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
   text-decoration: none;
   color: var(--haze);
   padding-bottom: var(--u);
@@ -291,8 +319,8 @@ a {
   align-items: center;
   gap: calc(var(--u) * 2);
   font-family: var(--pixel);
-  font-size: 20px;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
   color: var(--linen);
   background: rgba(58, 56, 73, 0.35);
   border: 2px solid var(--dusk);
@@ -353,13 +381,13 @@ main {
 }
 
 .title {
-  font-family: var(--display);
-  /* Stepped, not fluid: see the note on the 32px grid above the tokens. */
-  font-size: 128px;
+  font-family: var(--pixel);
+  /* Stepped, not fluid: see the note on the seven-pixel grid above. */
+  font-size: 84px;
   font-weight: 400;
-  line-height: 0.95;
-  /* Two font units. Anything off that grid blurs every letter but the first. */
-  letter-spacing: 0.0625em;
+  line-height: var(--lh-pixel);
+  /* The cell already carries its pixel of gap; tracking only loosens it. */
+  letter-spacing: 0;
   margin: 0;
   text-shadow: 0 0 56px rgba(255, 122, 52, 0.3);
 }
@@ -368,17 +396,20 @@ main {
 .title-last {
   color: var(--ember);
   /*
-   * Cancels the space trailing the last glyph — its right side bearing plus
-   * the tracking. Without it the browser centres a box that is wider than the
-   * ink, and the word sits visibly left of centre.
+   * Cancels the gap trailing the last glyph. Every cell in this face carries
+   * one design pixel of space on its right, so a centred line is always half
+   * that far left of true centre — six pixels at the size above, which is
+   * plainly visible. Removing the last gap makes the advance box equal the
+   * ink, and the word centres on what you can actually see.
    */
-  margin-right: -0.156em;
+  margin-right: calc(var(--px-gap) * -1);
 }
 
 .tagline {
   font-family: var(--pixel);
-  font-size: 24px;
-  letter-spacing: 0.16em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
+  line-height: var(--lh-label);
   color: var(--haze);
   margin: var(--u) 0 calc(var(--u) * 6);
 }
@@ -557,24 +588,27 @@ main {
 
 .readout-label {
   font-family: var(--pixel);
-  font-size: 17px;
-  letter-spacing: 0.22em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
   text-transform: uppercase;
   color: var(--dusk);
 }
 
 .readout-value {
-  font-family: var(--display);
-  font-size: 48px;
+  font-family: var(--pixel);
+  font-size: 35px;
   font-weight: 400;
-  line-height: 1;
+  line-height: var(--lh-pixel);
+  letter-spacing: 0;
+  /* Redundant while the pixel face loads — it is monospaced — but the
+     fallback in front of it is not guaranteed to be. */
   font-variant-numeric: tabular-nums;
 }
 
 .readout-unit {
   font-family: var(--pixel);
-  font-size: 20px;
-  letter-spacing: 0.14em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
   color: var(--ember);
 }
 
@@ -670,8 +704,9 @@ main {
 
 .countdown-lead {
   font-family: var(--pixel);
-  font-size: 22px;
-  letter-spacing: 0.1em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
+  line-height: var(--lh-label);
   color: var(--haze);
   margin: 0;
 }
@@ -692,10 +727,11 @@ main {
 }
 
 .unit b {
-  font-family: var(--display);
-  font-size: 48px;
+  font-family: var(--pixel);
+  font-size: 35px;
   font-weight: 400;
-  line-height: 1;
+  line-height: var(--lh-pixel);
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -709,10 +745,12 @@ main {
 }
 
 .sep {
-  font-family: var(--display);
-  font-size: 32px;
+  font-family: var(--pixel);
+  /* Same size as the digits: the colon sits centred in its cell, so matching
+     the size is what puts it at the right height between them. */
+  font-size: 35px;
   color: var(--stone);
-  line-height: 1.1;
+  line-height: var(--lh-pixel);
 }
 
 .countdown-note {
@@ -742,10 +780,12 @@ main {
 .term {
   display: flex;
   align-items: baseline;
-  font-family: var(--display);
-  font-size: 32px;
+  font-family: var(--pixel);
+  font-size: 21px;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  /* A shell prompt whose columns drift is not a shell prompt. */
+  letter-spacing: 0;
+  line-height: var(--lh-pixel);
   margin: 0;
   color: var(--linen);
 }
@@ -780,9 +820,11 @@ main {
 
 .term::after {
   content: "";
-  width: 12px;
-  height: 24px;
-  margin-left: 6px;
+  /* Measured off the type rather than in pixels, so it stays a block of whole
+     pixels at every step of the scale and needs no breakpoint of its own. */
+  width: calc(var(--px-gap) * 4);
+  height: 1em;
+  margin-left: var(--px-gap);
   background: var(--ember);
   animation: blink 1s step-end infinite;
 }
@@ -880,9 +922,10 @@ main {
 }
 
 .node-at {
-  font-family: var(--display);
-  font-size: 32px;
+  font-family: var(--pixel);
+  font-size: 21px;
   font-weight: 400;
+  line-height: var(--lh-pixel);
   color: var(--ember);
 }
 
@@ -975,23 +1018,24 @@ main {
 
 .tier-label {
   font-family: var(--pixel);
-  font-size: 17px;
-  letter-spacing: 0.14em;
+  font-size: 14px;
+  letter-spacing: var(--px-gap);
   text-transform: uppercase;
   color: var(--haze);
 }
 
 .tier-value {
-  font-family: var(--display);
-  font-size: 32px;
+  font-family: var(--pixel);
+  font-size: 21px;
   font-weight: 400;
-  line-height: 1.1;
+  line-height: var(--lh-pixel);
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   color: var(--linen);
 }
 
 .tier-main .tier-value {
-  font-size: 48px;
+  font-size: 35px;
   color: var(--flame);
 }
 
@@ -1003,13 +1047,12 @@ main {
   color: var(--haze);
 }
 
-.tier-mini .tier-value {
-  font-size: 32px;
-}
-
-.tier-mini .tier-label {
-  font-size: 15px;
-}
+/*
+ * The mini tiers used to step down a size from the pair beside them. On a
+ * seven-pixel grid there is no step below the label size — the next one down
+ * is half of it — so they now separate by placement and by the size of their
+ * art, which is where the difference was really coming from anyway.
+ */
 
 .footnote {
   font-family: var(--body);
@@ -1096,11 +1139,11 @@ main {
 }
 
 .slide-name {
-  font-family: var(--display);
-  font-size: 48px;
+  font-family: var(--pixel);
+  font-size: 35px;
   font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.05em;
+  line-height: var(--lh-pixel);
+  letter-spacing: var(--px-gap);
   margin: 0 0 calc(var(--u) * 4);
 }
 
@@ -1249,13 +1292,18 @@ main {
 .watermark {
   position: absolute;
   left: 50%;
-  bottom: -0.32em;
+  /*
+   * Twelve design pixels below the fold, which crops the letters at about a
+   * third. The overrides on the @font-face are what make that reliable —
+   * without them the baseline moves between platforms and so does the crop.
+   */
+  bottom: -0.428571em;
   transform: translateX(-50%);
-  font-family: var(--display);
-  font-size: 128px;
+  font-family: var(--pixel);
+  font-size: 84px;
   font-weight: 400;
-  letter-spacing: 0.0625em;
-  line-height: 1;
+  letter-spacing: 0;
+  line-height: var(--lh-pixel);
   color: #221d33;
   white-space: nowrap;
   user-select: none;
@@ -1264,13 +1312,14 @@ main {
 .watermark b {
   color: #4a2a1c;
   /* Same trailing-space cancellation as the headline; see .title-last. */
-  margin-right: -0.156em;
+  margin-right: calc(var(--px-gap) * -1);
 }
 
 .foot-line {
   position: relative;
   font-family: var(--pixel);
-  font-size: 28px;
+  font-size: 21px;
+  line-height: var(--lh-label);
   color: var(--haze);
   margin: 0;
 }
@@ -1336,21 +1385,22 @@ main {
 }
 
 @media (max-width: 768px) {
-  /* Down one step on the 16px grid, never between steps. */
+  /* Down the seven-pixel scale, never between its steps. */
   .title {
-    font-size: 96px;
+    font-size: 63px;
   }
 
   .slide-name {
-    font-size: 32px;
+    font-size: 21px;
   }
 
   .watermark {
-    font-size: 96px;
+    font-size: 63px;
   }
 
-  .unit b {
-    font-size: 32px;
+  .unit b,
+  .sep {
+    font-size: 21px;
   }
 
   .nav {
@@ -1396,20 +1446,16 @@ main {
   }
 
   .title {
-    font-size: 64px;
+    font-size: 42px;
   }
 
   .watermark {
-    font-size: 64px;
+    font-size: 42px;
   }
 
+  /* The cursor needs no rule here: it is sized in em off the heading. */
   .term {
-    font-size: 16px;
-  }
-
-  .term::after {
-    height: 18px;
-    width: 9px;
+    font-size: 14px;
   }
 
   /* Four across does not fit; two rows of two do. */

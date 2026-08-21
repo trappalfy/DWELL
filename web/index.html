@@ -8,7 +8,15 @@
     <link rel="icon" href="/art/favicon.svg"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400&family=Silkscreen:wght@400&family=Karla:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500&display=swap" rel="stylesheet"/>
+    <!--
+      The pixel face is ours and sets every word above the fold, so it is
+      fetched alongside the stylesheet rather than after it. crossorigin is
+      required even though the file is same-origin: fonts are always fetched
+      in CORS mode, and without it the preload is thrown away and the file
+      downloaded a second time.
+    -->
+    <link rel="preload" href="/fonts/akedopikuseru.otf" as="font" type="font/otf" crossorigin/>
     <link rel="stylesheet" href="/styles.css"/>
   </head>
   <body>

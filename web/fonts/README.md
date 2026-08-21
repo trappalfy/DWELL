@@ -68,8 +68,14 @@ PB Pixel carries no equivalent constraint. It is an ordinary proportional
 OFL face — `npm run fonts` reports a coincidental common divisor across its
 round metrics (em 1000, advance 350), but that is an artefact of the numbers
 being round, not a drawn pixel grid the way Akedopikuseru's is. Its sizes on
-the page (17, 19, 20, 22, 24, 28) do not follow fixed steps and do not need
-to.
+the page (24–36px) do not follow fixed steps and do not need to.
+
+Those sizes run larger than the nominal px number suggests, on purpose: PB
+Pixel's cap height is 0.35 em, about half a typical face's ~0.7. A label set
+at what looks like a normal UI size reads far smaller than it appears in the
+markup — this is why the header nav and the connect button were nearly
+illegible at 19–20px. Read cap height, not font-size, when judging whether a
+PB Pixel label is legible.
 
 ## Cap height is the whole em, which is unusual
 

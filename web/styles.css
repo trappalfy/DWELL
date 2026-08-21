@@ -205,7 +205,7 @@ a {
 
 .wordmark {
   font-family: var(--display);
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-decoration: none;
@@ -325,7 +325,8 @@ main {
 
 .title {
   font-family: var(--display);
-  font-size: clamp(56px, 12vw, 108px);
+  /* Stepped, not fluid: see the note on the 32px grid above the tokens. */
+  font-size: 64px;
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: 0.06em;
@@ -528,7 +529,7 @@ main {
 
 .readout-value {
   font-family: var(--display);
-  font-size: clamp(36px, 7vw, 56px);
+  font-size: 48px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -656,7 +657,7 @@ main {
 
 .unit b {
   font-family: var(--display);
-  font-size: 44px;
+  font-size: 48px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -673,7 +674,7 @@ main {
 
 .sep {
   font-family: var(--display);
-  font-size: 36px;
+  font-size: 32px;
   color: var(--stone);
   line-height: 1.1;
 }
@@ -705,8 +706,8 @@ main {
 .term {
   display: flex;
   align-items: baseline;
-  font-family: var(--pixel);
-  font-size: 30px;
+  font-family: var(--display);
+  font-size: 32px;
   font-weight: 400;
   letter-spacing: 0.02em;
   margin: 0;
@@ -844,7 +845,7 @@ main {
 
 .node-at {
   font-family: var(--display);
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--ember);
 }
@@ -946,7 +947,7 @@ main {
 
 .tier-value {
   font-family: var(--display);
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -954,7 +955,7 @@ main {
 }
 
 .tier-main .tier-value {
-  font-size: 46px;
+  font-size: 48px;
   color: var(--flame);
 }
 
@@ -967,7 +968,7 @@ main {
 }
 
 .tier-mini .tier-value {
-  font-size: 24px;
+  font-size: 32px;
 }
 
 .tier-mini .tier-label {
@@ -1060,7 +1061,7 @@ main {
 
 .slide-name {
   font-family: var(--display);
-  font-size: clamp(40px, 7vw, 72px);
+  font-size: 48px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.05em;
@@ -1215,7 +1216,7 @@ main {
   bottom: -0.32em;
   transform: translateX(-50%);
   font-family: var(--display);
-  font-size: clamp(96px, 22vw, 200px);
+  font-size: 128px;
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1;
@@ -1297,6 +1298,23 @@ main {
 }
 
 @media (max-width: 768px) {
+  /* Down one step on the 16px grid, never between steps. */
+  .title {
+    font-size: 48px;
+  }
+
+  .slide-name {
+    font-size: 32px;
+  }
+
+  .watermark {
+    font-size: 96px;
+  }
+
+  .unit b {
+    font-size: 32px;
+  }
+
   .nav {
     display: none;
   }
@@ -1339,8 +1357,16 @@ main {
     --side: 20px;
   }
 
+  .title {
+    font-size: 32px;
+  }
+
+  .watermark {
+    font-size: 64px;
+  }
+
   .term {
-    font-size: 22px;
+    font-size: 16px;
   }
 
   .term::after {

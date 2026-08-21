@@ -1,35 +1,43 @@
 # Self-hosted faces
 
-Two files belong here. Until they arrive the page falls back to Pixelify Sans
-and Silkscreen from Google Fonts and stays correct — nothing breaks, it just
-does not look like the intended design.
+Both files are in place and verified. `npm run fonts` re-reads the licence
+out of each file's own `name` table — worth doing again if either is ever
+replaced, because the sites that carry these fonts also carry other people's
+commercial typefaces and their licence claims are not evidence.
 
-| File | Face | Role on the page | Source |
+| File | Face | Licence, as stated inside the file | Role |
 |---|---|---|---|
-| `koganejidainogemu.ttf` | Koganejidainogemu | `--display`: wordmark, H1, big numbers, slide names, watermark | https://fonts-online.ru/fonts/koganejidainogemu |
-| `pb-pixel.ttf` | PB Pixel | `--pixel`: navigation, buttons, terminal headings, labels | https://pixelbag.net/pb-pixel-font-free-download/ |
+| `koganejidainogemu.ttf` | Koganejidainogemu, CoolGameXYZ 2020 | Public domain / GNU GPL | `--display` |
+| `pb-pixel.ttf` | PB Pixel, Pixelbag 2026 | SIL Open Font License 1.1 | `--pixel` |
 
-Both downloads sit behind a captcha or a JS form, so they have to be fetched
-by hand. Extract the archive and drop the `.ttf` in here under exactly the
-name above — `styles.css` refers to these paths.
+## The 32-pixel grid
 
-## Before shipping either one
+Koganejidainogemu has a units-per-em of **32**: it is a real bitmap face drawn
+on a 32-pixel grid, not an outline face that happens to look blocky. It is
+crisp only at whole multiples of that grid and soft everywhere between.
 
-```bash
-cd offchain && npm run fonts
-```
+Every size it sets is therefore a step on a 16-pixel scale — 16 / 32 / 48 /
+64 / 96 / 128 — and none of them use `clamp()`. **Do not make the display
+type fluid again.** A fluid size lands between steps at nearly every viewport
+width, which is what made the large type look mushy in the first place.
 
-That prints the copyright, licence and licence URL **out of the font file
-itself**. Read it rather than trusting the download page: the sites that
-carry these fonts also carry Apple's SF Pro and Emigre's Mrs Eaves, which
-they are in no position to license to anyone.
+PB Pixel has a normal units-per-em of 1000 and is free of that constraint.
 
-Keep any `OFL.txt`, `LICENSE` or `COPYING` from the archive in this folder.
-The Open Font Licence requires the licence to travel with the font, and a
-GPL font requires the same.
+## Which face does what, and why
+
+Koganejidainogemu is monospaced; PB Pixel is not. That is why the terminal
+headings (`$ cat HEARTBEAT.log`) use the display face rather than the label
+face: a shell prompt whose columns do not line up is not a shell prompt.
+
+## Known cost
+
+Koganejidainogemu is 161 KB for 1165 glyphs, most of them Cyrillic and unused
+on an English-only page. Subsetting it to Latin would cut it to a few
+kilobytes, but that needs a font tool and therefore a build step, which this
+project does not have. Worth revisiting if page weight ever matters.
 
 ## Why TrueType and not woff2
 
-Both files are single-digit kilobytes, so the conversion would save almost
-nothing and would put a build step into a project that deliberately has none.
-`offchain/src/api/static.ts` serves `.ttf` with the right content type.
+Converting would save little and would put a build step into a project that
+deliberately has none. `offchain/src/api/static.ts` serves `.ttf` with the
+right content type.

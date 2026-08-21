@@ -1,11 +1,12 @@
 /**
  * Сторож типографской сетки.
  *
- * Пиксельная гарнитура нарисована в клетке 8x8, её кегельная площадка — семь
- * нарисованных пикселей, поэтому она чёткая только на кеглях, кратных семи.
- * Правило легко нарушить задним числом: поправить один размер «на глаз», и
- * вся страница поплывёт так же, как в прошлый раз. Числа ниже вынимаются из
- * самого файла гарнитуры, а не переписываются сюда руками.
+ * Только Akedopikuseru (--display) нарисована в клетке 8x8 и держит кегельную
+ * сетку в семь пикселей; PB Pixel (--pixel) — обычная пропорциональная
+ * гарнитура и на эту сетку не завязана. Правило легко нарушить задним
+ * числом: поправить один размер «на глаз», и вся страница поплывёт так же,
+ * как в прошлый раз. Числа для сетки вынимаются из самого файла гарнитуры,
+ * а не переписываются сюда руками.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -72,7 +73,7 @@ function stepsPerEm(): number {
   }
 
   const unitsPerEm = file.readUInt16BE(tables.get("head")! + 18);
-  const advance = file.readUInt16BE(tables.get("hmtx")! );
+  const advance = file.readUInt16BE(tables.get("hmtx")!);
   const os2 = tables.get("OS/2")!;
   const capHeight = file.readInt16BE(os2 + 88);
   const xHeight = file.readInt16BE(os2 + 86);
@@ -86,33 +87,51 @@ function stepsPerEm(): number {
 
 const STEP = stepsPerEm();
 
-/** Селекторы, которые сами объявляют пиксельную гарнитуру. */
-const pixelSelectors = new Set(
-  rules.filter((r) => declaration(r.body, "font-family") === "var(--pixel)").map((r) => r.selector)
+/** Селекторы на Akedopikuseru: она одна из двух держит сетку в 7px. */
+const gridSelectors = new Set(
+  rules.filter((r) => declaration(r.body, "font-family") === "var(--display)").map((r) => r.selector)
 );
 
-test("гарнитура нарисована на сетке в семь пикселей", () => {
+/** Обе самостоятельно захостенные гарнитуры, для проверок, общих для них. */
+const selfHostedSelectors = new Set(
+  rules
+    .filter((r) => {
+      const family = declaration(r.body, "font-family");
+      return family === "var(--display)" || family === "var(--pixel)";
+    })
+    .map((r) => r.selector)
+);
+
+test("дисплейная гарнитура нарисована на сетке в семь пикселей", () => {
   // Если гарнитуру подменят на другую, весь масштаб ниже станет неверным, и
   // об этом надо узнать здесь, а не по размытым буквам на странице.
   assert.equal(STEP, 7, "шаг сетки изменился — масштаб на странице надо пересчитать");
 });
 
-test("файл гарнитуры лежит там, куда указывает @font-face", () => {
+test("оба self-hosted файла лежат там, куда указывают их @font-face", () => {
   // Ровно эта рассинхронизация уже случалась: стиль ссылался на одно имя,
   // в каталоге лежало другое, и страница молча падала на запасную гарнитуру.
-  const match = css.indexOf("src: url(\"");
-  assert.notEqual(match, -1, "в стилях нет @font-face");
+  const urls: string[] = [];
+  let at = 0;
+  while (true) {
+    const match = css.indexOf('src: url("', at);
+    if (match === -1) break;
+    const from = match + 'src: url("'.length;
+    urls.push(css.slice(from, css.indexOf('"', from)));
+    at = from;
+  }
 
-  const from = match + "src: url(\"".length;
-  const url = css.slice(from, css.indexOf("\"", from));
-  assert.ok(existsSync(join(web, url)), `@font-face ссылается на отсутствующий файл: ${url}`);
+  assert.ok(urls.length >= 2, "ожидались @font-face для обеих гарнитур");
+  for (const url of urls) {
+    assert.ok(existsSync(join(web, url)), `@font-face ссылается на отсутствующий файл: ${url}`);
+  }
 });
 
-test("каждый кегль пиксельной гарнитуры кратен шагу сетки", () => {
+test("каждый кегль дисплейной гарнитуры кратен шагу сетки", () => {
   const offGrid: string[] = [];
 
   for (const rule of rules) {
-    if (!pixelSelectors.has(rule.selector)) continue;
+    if (!gridSelectors.has(rule.selector)) continue;
     const size = declaration(rule.body, "font-size");
     if (size === null) continue;
 
@@ -135,7 +154,7 @@ test("переопределения кегля в брейкпоинтах то
 
     // Селектор в брейкпоинте может перечислять несколько имён через запятую.
     const names = rule.selector.split(",").map((s) => s.trim());
-    if (!names.some((name) => pixelSelectors.has(name))) continue;
+    if (!names.some((name) => gridSelectors.has(name))) continue;
 
     const px = Number.parseInt(size, 10);
     if (px % STEP !== 0) offGrid.push(`${rule.selector} = ${size}`);
@@ -144,11 +163,11 @@ test("переопределения кегля в брейкпоинтах то
   assert.deepEqual(offGrid, [], `кегли вне сетки в ${STEP}px`);
 });
 
-test("кегль пиксельной гарнитуры никогда не текучий", () => {
+test("кегль дисплейной гарнитуры никогда не текучий", () => {
   // clamp() почти на любой ширине окна попадает между шагами сетки — именно
   // это в прошлый раз и превратило крупный текст в кашу.
   for (const rule of rules) {
-    if (!pixelSelectors.has(rule.selector)) continue;
+    if (!gridSelectors.has(rule.selector)) continue;
     const size = declaration(rule.body, "font-size");
     if (size === null) continue;
     assert.ok(!size.includes("clamp("), `${rule.selector}: текучий кегль ${size}`);
@@ -156,11 +175,12 @@ test("кегль пиксельной гарнитуры никогда не т�
   }
 });
 
-test("трекинг либо нулевой, либо кратен пикселю клетки", () => {
+test("трекинг дисплейной гарнитуры либо нулевой, либо кратен пикселю клетки", () => {
   // Клетка уже несёт свой пиксель промежутка. Произвольный трекинг сдвигает
-  // каждую букву после первой с сетки.
+  // каждую букву после первой с сетки. У PB Pixel такого ограничения нет —
+  // это обычная пропорциональная гарнитура, её трекинг свободен.
   for (const rule of rules) {
-    if (!pixelSelectors.has(rule.selector)) continue;
+    if (!gridSelectors.has(rule.selector)) continue;
     const tracking = declaration(rule.body, "letter-spacing");
     if (tracking === null) continue;
 
@@ -169,21 +189,36 @@ test("трекинг либо нулевой, либо кратен пиксел
   }
 });
 
-test("поддельная жирность не запрашивается ни у одной пиксельной гарнитуры", () => {
-  // В файле одно начертание. Всё выше 400 браузер подделает размазыванием,
-  // что на жёстких пиксельных краях читается как дефект отрисовки.
+test("поддельная жирность не запрашивается ни у одной self-hosted гарнитуры", () => {
+  // Оба файла — одно начертание. Всё выше 400 браузер подделает
+  // размазыванием, что на жёстких пиксельных краях читается как дефект
+  // отрисовки, а не как жирность.
   for (const rule of rules) {
-    if (!pixelSelectors.has(rule.selector)) continue;
+    if (!selfHostedSelectors.has(rule.selector)) continue;
     const weight = declaration(rule.body, "font-weight");
     if (weight === null) continue;
     assert.ok(Number.parseInt(weight, 10) <= 400, `${rule.selector}: font-weight ${weight}`);
   }
 });
 
-test("убранная гарнитура больше нигде не упоминается", () => {
-  for (const gone of ["--display", "Koganejidainogemu", "PB Pixel", "Silkscreen", "Pixelify"]) {
+test("гарнитура, убранная насовсем, больше нигде не упоминается", () => {
+  // Koganejidainogemu и её резервная Pixelify Sans ушли безвозвратно вместе
+  // с --display, который раньше на неё указывал. PB Pixel и Silkscreen сюда
+  // не входят — они вернулись как --pixel.
+  for (const gone of ["Koganejidainogemu", "Pixelify"]) {
     assert.ok(!css.includes(gone), `стили всё ещё ссылаются на ${gone}`);
     const html = readFileSync(join(web, "index.html"), "utf8");
     assert.ok(!html.includes(gone), `разметка всё ещё ссылается на ${gone}`);
+  }
+});
+
+test("терминальные заголовки и таймлайн остаются на моноширинной гарнитуре", () => {
+  // .term и .node-at требуют выравнивания колонок — единственная причина,
+  // по которой они остались на --display, а не ушли на меньший --pixel
+  // вместе с прочими подписями.
+  for (const selector of [".term", ".node-at"]) {
+    const rule = rules.find((r) => r.selector === selector);
+    assert.ok(rule, `правило ${selector} не найдено`);
+    assert.equal(declaration(rule!.body, "font-family"), "var(--display)", `${selector} не моноширинный`);
   }
 });

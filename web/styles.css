@@ -37,6 +37,13 @@
   line-gap-override: 0%;
 }
 
+@font-face {
+  font-family: "PB Pixel";
+  src: url("/fonts/pb-pixel.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   /* night, outside */
   --night-deep: #0a0a14;
@@ -55,15 +62,21 @@
   --glass: #1c1b33;
 
   /*
-   * Two faces, two jobs: pixel where the text labels something, Karla where
-   * the text is actually read. A pixel face is drawn for one size and comes
-   * apart in a paragraph, so it never sets running prose here.
+   * Three faces, three jobs.
    *
-   * The fallback is a monospace rather than another pixel face on purpose —
-   * the terminal headings depend on columns lining up, and a proportional
-   * stand-in would break them the moment the file failed to load.
+   * The split is not decorative: a bitmap face is drawn for one pixel size,
+   * so it holds a heading and falls apart in a footnote. Display carries the
+   * project's own name and its biggest numbers; pixel labels everything
+   * smaller — nav, buttons, unit labels; Karla is the only one that ever
+   * sets running prose, because a pixel face comes apart in a paragraph.
+   *
+   * Display is also the only monospaced one of the two pixel faces, which is
+   * why the terminal headings (.term) stay on it rather than moving to the
+   * smaller label face: a shell prompt whose columns do not line up is not a
+   * shell prompt.
    */
-  --pixel: "Akedopikuseru", ui-monospace, monospace;
+  --display: "Akedopikuseru", ui-monospace, monospace;
+  --pixel: "PB Pixel", "Silkscreen", ui-monospace, monospace;
   --body: "Karla", system-ui, -apple-system, sans-serif;
 
   /*
@@ -260,7 +273,7 @@ a {
 }
 
 .wordmark {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 21px;
   /* Never above 400: the face ships one Regular, and anything more is faked. */
   font-weight: 400;
@@ -276,8 +289,8 @@ a {
 
 .nav a {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
+  font-size: 19px;
+  letter-spacing: 0.08em;
   text-decoration: none;
   color: var(--haze);
   padding-bottom: var(--u);
@@ -319,8 +332,8 @@ a {
   align-items: center;
   gap: calc(var(--u) * 2);
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
+  font-size: 20px;
+  letter-spacing: 0.06em;
   color: var(--linen);
   background: rgba(58, 56, 73, 0.35);
   border: 2px solid var(--dusk);
@@ -381,7 +394,7 @@ main {
 }
 
 .title {
-  font-family: var(--pixel);
+  font-family: var(--display);
   /* Stepped, not fluid: see the note on the seven-pixel grid above. */
   font-size: 84px;
   font-weight: 400;
@@ -407,9 +420,8 @@ main {
 
 .tagline {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
-  line-height: var(--lh-label);
+  font-size: 24px;
+  letter-spacing: 0.16em;
   color: var(--haze);
   margin: var(--u) 0 calc(var(--u) * 6);
 }
@@ -588,27 +600,25 @@ main {
 
 .readout-label {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
+  font-size: 17px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dusk);
 }
 
 .readout-value {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 35px;
   font-weight: 400;
   line-height: var(--lh-pixel);
   letter-spacing: 0;
-  /* Redundant while the pixel face loads — it is monospaced — but the
-     fallback in front of it is not guaranteed to be. */
   font-variant-numeric: tabular-nums;
 }
 
 .readout-unit {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
+  font-size: 20px;
+  letter-spacing: 0.14em;
   color: var(--ember);
 }
 
@@ -704,9 +714,8 @@ main {
 
 .countdown-lead {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
-  line-height: var(--lh-label);
+  font-size: 22px;
+  letter-spacing: 0.1em;
   color: var(--haze);
   margin: 0;
 }
@@ -727,7 +736,7 @@ main {
 }
 
 .unit b {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 35px;
   font-weight: 400;
   line-height: var(--lh-pixel);
@@ -745,7 +754,7 @@ main {
 }
 
 .sep {
-  font-family: var(--pixel);
+  font-family: var(--display);
   /* Same size as the digits: the colon sits centred in its cell, so matching
      the size is what puts it at the right height between them. */
   font-size: 35px;
@@ -780,10 +789,11 @@ main {
 .term {
   display: flex;
   align-items: baseline;
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 21px;
   font-weight: 400;
-  /* A shell prompt whose columns drift is not a shell prompt. */
+  /* A shell prompt whose columns drift is not a shell prompt; --display is
+     the monospaced one of the two pixel faces for exactly this reason. */
   letter-spacing: 0;
   line-height: var(--lh-pixel);
   margin: 0;
@@ -922,7 +932,7 @@ main {
 }
 
 .node-at {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 21px;
   font-weight: 400;
   line-height: var(--lh-pixel);
@@ -1018,14 +1028,14 @@ main {
 
 .tier-label {
   font-family: var(--pixel);
-  font-size: 14px;
-  letter-spacing: var(--px-gap);
+  font-size: 17px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--haze);
 }
 
 .tier-value {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 21px;
   font-weight: 400;
   line-height: var(--lh-pixel);
@@ -1139,7 +1149,7 @@ main {
 }
 
 .slide-name {
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 35px;
   font-weight: 400;
   line-height: var(--lh-pixel);
@@ -1299,7 +1309,7 @@ main {
    */
   bottom: -0.428571em;
   transform: translateX(-50%);
-  font-family: var(--pixel);
+  font-family: var(--display);
   font-size: 84px;
   font-weight: 400;
   letter-spacing: 0;
@@ -1318,8 +1328,7 @@ main {
 .foot-line {
   position: relative;
   font-family: var(--pixel);
-  font-size: 21px;
-  line-height: var(--lh-label);
+  font-size: 28px;
   color: var(--haze);
   margin: 0;
 }

@@ -40,7 +40,7 @@ test("пустой резерв даёт нулевой релиз", () => {
   assert.equal(computeRelease(vault(0n, 0n, 0n), SOME_WEIGHT), 0n);
 });
 
-test("ставка воспроизводит полураспад в три дня", () => {
+test("ставка воспроизводит полураспад в одни сутки", () => {
   const start = 10n ** 24n;
   let reserve = start;
   for (let i = 0; i < HALF_LIFE_EPOCHS; i++) {
@@ -53,5 +53,5 @@ test("ставка воспроизводит полураспад в три д�
 
 test("ставка меньше единицы, резерв не обнуляется за один шаг", () => {
   assert.ok(RATE_WAD < WAD);
-  assert.equal(HALF_LIFE_EPOCHS, 864);
+  assert.equal(HALF_LIFE_EPOCHS, 288, "одни сутки при эпохе в пять минут");
 });

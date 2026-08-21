@@ -24,7 +24,7 @@ const epochs = new EpochStore(db);
 const roots = new RootStore(db);
 const purchases = new PurchaseStore(db);
 
-const reader = new ChainReader(config.rpcUrl);
+const reader = new ChainReader(config.rpcUrl, config.projectToken);
 const writer = new ChainWriter(config.rpcUrl, config.keeperKey);
 
 // Alerts go to stderr so the process manager can route them without the

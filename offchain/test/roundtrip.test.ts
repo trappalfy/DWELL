@@ -54,7 +54,7 @@ before(async () => {
   vault = receipt.contractAddress as Address;
 
   writer = new ChainWriter(fork.rpcUrl, KEEPER_KEY);
-  reader = new ChainReader(fork.rpcUrl);
+  reader = new ChainReader(fork.rpcUrl, ADDRESSES.tsla);
 
   // Fund the vault with real TSLA so the solvency check inside publishRoot
   // can pass; the swap is the same one the fee converter will use.

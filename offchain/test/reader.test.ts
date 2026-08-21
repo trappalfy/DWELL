@@ -22,7 +22,9 @@ let reader: ChainReader;
 let online = false;
 
 before(async () => {
-  reader = new ChainReader(RPC);
+  // Настоящего токена проекта ещё нет; для интеграционного теста годится
+  // любой живой ERC20 с держателями, поэтому берём TSLA.
+  reader = new ChainReader(RPC, ADDRESSES.tsla);
   try {
     await reader.currentBlock();
     online = true;

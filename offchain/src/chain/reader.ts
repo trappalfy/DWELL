@@ -24,9 +24,16 @@ const LOG_LOOKBACK_BLOCKS = 100_000n;
 
 export class ChainReader {
   readonly #client: PublicClient;
+  readonly #projectToken: Address;
 
-  constructor(rpcUrl: string) {
+  /**
+   * @param projectToken the token miners must hold; weight is measured
+   *        against this balance. Rewards are a different asset entirely
+   *        (ADDRESSES.tsla), which is why this is not defaulted.
+   */
+  constructor(rpcUrl: string, projectToken: Address) {
     this.#client = createReadClient(rpcUrl);
+    this.#projectToken = projectToken;
   }
 
   currentBlock(): Promise<bigint> {
@@ -47,7 +54,7 @@ export class ChainReader {
 
     const values = await this.#client.multicall({
       contracts: accounts.map((account) => ({
-        address: ADDRESSES.tsla,
+        address: this.#projectToken,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [account]

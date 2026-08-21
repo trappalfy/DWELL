@@ -13,6 +13,7 @@ const VALID_ENV = {
   RPC_URL: "https://rpc.mainnet.chain.robinhood.com",
   REWARD_VAULT: "0xEeed234B30e9331ca8F540f42860a944F411b3DC",
   MIN_BALANCE: "100000",
+  PROJECT_TOKEN: "0xdddd000000000000000000000000000000000004",
   DATABASE_PATH: "./dwell.db",
   PORT: "8787"
 };
@@ -102,10 +103,26 @@ test("отсутствующий ключ кипера отвергается", 
   assert.throws(() => loadWorkerConfig(without), /KEEPER_PRIVATE_KEY/);
 });
 
-test("порог конвертации по умолчанию около десяти долларов", () => {
-  assert.equal(loadWorkerConfig(WORKER_ENV).conversionThreshold, 3_000_000_000_000_000n);
+test("порог конвертации по умолчанию около двух долларов", () => {
+  // Фонд маленький, и при пороге в $10 первые комиссии зависли бы на кипере,
+  // не дойдя до конвертации. Глубина пула это позволяет: покупка на $10
+  // съедала 0.79% WETH-стороны, на $2 — около 0.16%.
+  assert.equal(loadWorkerConfig(WORKER_ENV).conversionThreshold, 1_000_000_000_000_000n);
   assert.equal(
     loadWorkerConfig({ ...WORKER_ENV, CONVERSION_THRESHOLD_WEI: "5" }).conversionThreshold,
     5n
   );
+});
+
+test("адрес токена проекта обязателен", () => {
+  // Пока его нет, вес считался бы по TSLA: майнили бы держатели Tesla,
+  // а держатели токена проекта не получали бы ничего. Лучше не подняться.
+  const { PROJECT_TOKEN, ...without } = VALID_ENV;
+  assert.throws(() => loadRuntimeConfig(without), /PROJECT_TOKEN/);
+});
+
+test("токен проекта и актив награды — разные поля", () => {
+  const config = loadRuntimeConfig(VALID_ENV);
+  assert.equal(config.projectToken, "0xdddd000000000000000000000000000000000004");
+  assert.notEqual(config.projectToken, ADDRESSES.tsla, "вес считается по своему токену, награда — в TSLA");
 });

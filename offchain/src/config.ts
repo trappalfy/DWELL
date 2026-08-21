@@ -35,6 +35,12 @@ export const SLIPPAGE_BPS = 200;
 export interface RuntimeConfig {
   readonly rpcUrl: string;
   readonly rewardVault: Address;
+  /**
+   * The token miners must hold. Weight is measured against THIS balance,
+   * while rewards are paid in ADDRESSES.tsla — they are different assets and
+   * confusing them would score the wrong holders.
+   */
+  readonly projectToken: Address;
   readonly minBalance: bigint;
   readonly databasePath: string;
   readonly port: number;
@@ -59,6 +65,9 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   return {
     rpcUrl: required(env, "RPC_URL"),
     rewardVault: requireAddress(env, "REWARD_VAULT"),
+    // Required, never defaulted: a placeholder here would silently score
+    // holders of the wrong token and pay the wrong people.
+    projectToken: requireAddress(env, "PROJECT_TOKEN"),
     minBalance: BigInt(required(env, "MIN_BALANCE")) * 10n ** 18n,
     databasePath: required(env, "DATABASE_PATH"),
     port: Number(env.PORT ?? 8787)
@@ -90,6 +99,6 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     ...base,
     keeperKey: key,
     dryRun: env.DRY_RUN !== "false",
-    conversionThreshold: BigInt(env.CONVERSION_THRESHOLD_WEI ?? "3000000000000000")
+    conversionThreshold: BigInt(env.CONVERSION_THRESHOLD_WEI ?? "1000000000000000")
   };
 }

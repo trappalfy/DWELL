@@ -454,9 +454,12 @@ main {
 .hero {
   max-width: 900px;
   margin: 0 auto;
-  /* Trimmed from 8u: the stack below is tall enough on its own that the
-     claim button sat past the fold on an ordinary viewport. */
-  padding: calc(var(--u) * 3) var(--side) calc(var(--u) * 16);
+  /*
+   * Trimmed from 8u so the claim button would fit above the fold, then
+   * nudged back up 2u: at 3u the title sat right under the sticky header
+   * with no breathing room of its own.
+   */
+  padding: calc(var(--u) * 5) var(--side) calc(var(--u) * 16);
   text-align: center;
 }
 

@@ -9,7 +9,9 @@
   "scripts": {
     "test": "node --test",
     "typecheck": "tsc --noEmit",
-    "fixture": "node scripts/generate-merkle-fixture.ts"
+    "fixture": "node scripts/generate-merkle-fixture.ts",
+    "dev": "node scripts/dev-server.ts",
+    "art": "node scripts/generate-art.ts"
   },
   "dependencies": {
     "@openzeppelin/merkle-tree": "^1.0.8",

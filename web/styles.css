@@ -37,11 +37,26 @@
   line-gap-override: 0%;
 }
 
+/*
+ * The file declares an ascent of 1.1em (hhea and OS/2's win metrics agree,
+ * and USE_TYPO_METRICS isn't set, so browsers use that figure) while the
+ * font's own bbox shows real ink reaching only 0.35em above the baseline —
+ * the same cap height as its descent is real (0.1em, and that one the file
+ * gets right). With a tight line-height the browser reserves the full,
+ * bogus 1.1em of ascent space and anchors the line box to it, which pushes
+ * the actual glyphs into the bottom third of that space — inside a button
+ * this reads as the label sitting low instead of centred. The overrides
+ * restate the ascent as what the glyphs actually use, so a line box built
+ * from it centres on the ink instead of on empty reserved space above it.
+ */
 @font-face {
   font-family: "PB Pixel";
   src: url("/fonts/pb-pixel.ttf") format("truetype");
   font-weight: 400;
   font-display: swap;
+  ascent-override: 35%;
+  descent-override: 10%;
+  line-gap-override: 0%;
 }
 
 :root {

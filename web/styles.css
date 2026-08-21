@@ -199,17 +199,45 @@ a {
   gap: calc(var(--u) * 4);
   max-width: var(--page);
   margin: 0 auto;
-  padding: calc(var(--u) * 4) var(--side);
+  padding: calc(var(--u) * 3) var(--side);
   backdrop-filter: blur(6px);
 }
 
+/*
+ * The mark is a lockup, not a word: a lit flame beside the name, with the
+ * last letter taking the ember the way the hero's headline does. It is the
+ * only thing in the bar allowed to be loud.
+ */
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
   font-family: var(--display);
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 48px;
+  /* Never above 400 — see the note on faked bold above. */
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1;
   text-decoration: none;
   color: var(--linen);
+}
+
+.wordmark-flame {
+  width: 36px;
+  height: 48px;
+  flex: none;
+  /* A whole 3x of the 16-row source, so every art pixel stays square. */
+  filter: drop-shadow(0 0 10px rgba(255, 122, 52, 0.55));
+  transition: filter 160ms ease;
+}
+
+.wordmark-last {
+  color: var(--ember);
+}
+
+.wordmark:hover .wordmark-flame,
+.wordmark:focus-visible .wordmark-flame {
+  filter: drop-shadow(0 0 18px rgba(255, 194, 74, 0.85));
 }
 
 .nav {
@@ -327,7 +355,7 @@ main {
   font-family: var(--display);
   /* Stepped, not fluid: see the note on the 32px grid above the tokens. */
   font-size: 64px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 0.95;
   letter-spacing: 0.06em;
   margin: 0;
@@ -530,7 +558,7 @@ main {
 .readout-value {
   font-family: var(--display);
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -658,7 +686,7 @@ main {
 .unit b {
   font-family: var(--display);
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -846,7 +874,7 @@ main {
 .node-at {
   font-family: var(--display);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--ember);
 }
 
@@ -948,7 +976,7 @@ main {
 .tier-value {
   font-family: var(--display);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
   color: var(--linen);
@@ -1062,7 +1090,7 @@ main {
 .slide-name {
   font-family: var(--display);
   font-size: 48px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: 0.05em;
   margin: 0 0 calc(var(--u) * 4);
@@ -1217,7 +1245,7 @@ main {
   transform: translateX(-50%);
   font-family: var(--display);
   font-size: 128px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.08em;
   line-height: 1;
   color: #221d33;
@@ -1299,6 +1327,15 @@ main {
 
 @media (max-width: 768px) {
   /* Down one step on the 16px grid, never between steps. */
+  .wordmark {
+    font-size: 32px;
+  }
+
+  .wordmark-flame {
+    width: 24px;
+    height: 32px;
+  }
+
   .title {
     font-size: 48px;
   }

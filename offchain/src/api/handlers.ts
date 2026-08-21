@@ -9,7 +9,7 @@ import { buildTree } from "../tree.ts";
 import type { Routes } from "./router.ts";
 import type { HeartbeatStore } from "../db/heartbeats.ts";
 import type { EntitlementStore } from "../db/entitlements.ts";
-import type { Address } from "../types.ts";
+import type { Address, VaultState } from "../types.ts";
 
 export interface HandlerDeps {
   readonly heartbeats: HeartbeatStore;
@@ -18,7 +18,10 @@ export interface HandlerDeps {
     currentBlock(): Promise<bigint>;
     balancesAt(accounts: readonly Address[], blockNumber?: bigint): Promise<Map<Address, bigint>>;
     claimed(vault: Address, account: Address): Promise<bigint>;
+    vaultState(vault: Address): Promise<VaultState>;
   };
+  readonly roots: { lastPublished(): number | null };
+  readonly epochs: { countSettledAfter(epoch: number | null): number };
   readonly minBalance: bigint;
   readonly vaultAddress: Address;
   readonly projectToken: Address;
@@ -27,6 +30,22 @@ export interface HandlerDeps {
 
 /** Mirrors RewardVault.CLAIM_DELAY; the UI needs it to say when a root goes live. */
 const CLAIM_DELAY_SECONDS = 300;
+
+/**
+ * How long one reading of the vault is reused.
+ *
+ * /v1/stats is polled by every open tab, and the whole product asks people to
+ * keep tabs open — reading the chain per request would turn our own visitors
+ * into a load generator against the RPC. Fifteen seconds is well inside the
+ * half-hour interval these numbers actually move on.
+ */
+const VAULT_CACHE_MS = 15_000;
+
+interface VaultNumbers {
+  readonly vaultBalance: string;
+  readonly totalReleased: string;
+  readonly totalClaimed: string;
+}
 
 function isAddress(value: unknown): value is Address {
   return typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value);
@@ -40,6 +59,36 @@ export function createHandlers(deps: HandlerDeps): Routes {
   // for a retry after a dropped response without letting a client flood.
   const heartbeatLimit = new RateLimiter({ capacity: 12, refillPerMs: 6 / 60_000 });
   const challengeLimit = new RateLimiter({ capacity: 5, refillPerMs: 5 / 60_000 });
+
+  let cachedVault: { at: number; value: VaultNumbers | null } | null = null;
+  let vaultInFlight: Promise<VaultNumbers | null> | null = null;
+
+  /** Cached and de-duplicated: a burst of pollers costs one chain read, not one each. */
+  const readVault = (): Promise<VaultNumbers | null> => {
+    if (cachedVault && deps.now() - cachedVault.at < VAULT_CACHE_MS) {
+      return Promise.resolve(cachedVault.value);
+    }
+    if (vaultInFlight) return vaultInFlight;
+
+    vaultInFlight = deps.reader
+      .vaultState(deps.vaultAddress)
+      .then((state) => ({
+        vaultBalance: state.balance.toString(),
+        totalReleased: state.totalAllocated.toString(),
+        totalClaimed: state.totalClaimed.toString()
+      }))
+      // An unreachable chain must not take /v1/stats down with it: these
+      // numbers decorate a section, they gate nothing. Caching the failure
+      // too keeps a flapping RPC from being hammered.
+      .catch((): VaultNumbers | null => null)
+      .then((value) => {
+        cachedVault = { at: deps.now(), value };
+        vaultInFlight = null;
+        return value;
+      });
+
+    return vaultInFlight;
+  };
 
   return {
     "POST /v1/session/challenge": ({ body, ip }) => {
@@ -155,20 +204,39 @@ export function createHandlers(deps: HandlerDeps): Routes {
       }
     }),
 
-    "GET /v1/stats": () => {
+    "GET /v1/stats": async () => {
       const now = Math.floor(deps.now() / 1_000);
       const cumulative = deps.entitlements.load();
 
       let totalAllocated = 0n;
       for (const amount of cumulative.values()) totalAllocated += amount;
 
+      // What the publisher itself waits for, so the page counts down to the
+      // real event rather than to a number it invented. Settled epochs are
+      // counted, not subtracted: epoch ids come from unix time and run in
+      // the millions, so their difference measures elapsed time, not work.
+      const lastPublishedEpoch = deps.roots.lastPublished();
+      const settled = deps.epochs.countSettledAfter(lastPublishedEpoch);
+      const epochsUntilPublish = Math.max(0, PUBLISH_EVERY_EPOCHS - settled);
+
+      const vault = await readVault();
+
       return {
         status: 200,
         body: {
+          // Sent so the page can correct for a skewed local clock instead of
+          // showing a countdown that disagrees with the protocol.
+          serverTime: now,
           currentEpoch: epochOf(now),
           activeMiners: deps.heartbeats.accountsInBucket(bucketOf(now)).length,
           entitlementAccounts: cumulative.size,
-          totalAllocated: totalAllocated.toString()
+          totalAllocated: totalAllocated.toString(),
+          lastPublishedEpoch,
+          epochsUntilPublish,
+          // Null when the chain could not be reached; the page shows a dash.
+          vaultBalance: vault?.vaultBalance ?? null,
+          totalReleased: vault?.totalReleased ?? null,
+          totalClaimed: vault?.totalClaimed ?? null
         }
       };
     }

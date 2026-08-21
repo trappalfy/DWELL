@@ -14,12 +14,26 @@ const MIN = 100_000n * 10n ** 18n;
 const VAULT = "0xeeee000000000000000000000000000000000003" as Address;
 const PROJECT_TOKEN = "0xdddd000000000000000000000000000000000004" as Address;
 
+interface BootOptions {
+  readonly alreadyClaimed?: bigint;
+  readonly lastPublished?: number | null;
+  readonly settledAfter?: number;
+  /** Throws to stand in for an unreachable RPC. */
+  readonly vaultState?: () => Promise<{
+    balance: bigint;
+    totalAllocated: bigint;
+    totalClaimed: bigint;
+  }>;
+}
+
 // Port 0 asks the OS for a free port, but the assignment is only readable
 // after the "listening" event — reading address() synchronously races.
-async function boot(balance: bigint, alreadyClaimed = 0n) {
+async function boot(balance: bigint, options: BootOptions = {}) {
   const db = openDatabase(":memory:");
   const heartbeats = new HeartbeatStore(db);
   const entitlements = new EntitlementStore(db);
+  let vaultReads = 0;
+
   const server = startServer(
     {
       heartbeats,
@@ -28,8 +42,15 @@ async function boot(balance: bigint, alreadyClaimed = 0n) {
         currentBlock: async () => 42_000_000n,
         balancesAt: async (accounts: readonly Address[]) =>
           new Map(accounts.map((a) => [a, balance])),
-        claimed: async () => alreadyClaimed
+        claimed: async () => options.alreadyClaimed ?? 0n,
+        vaultState: async () => {
+          vaultReads++;
+          if (options.vaultState) return options.vaultState();
+          return { balance: 7n, totalAllocated: 5n, totalClaimed: 3n };
+        }
       },
+      roots: { lastPublished: () => options.lastPublished ?? null },
+      epochs: { countSettledAfter: () => options.settledAfter ?? 0 },
       minBalance: MIN,
       vaultAddress: VAULT,
       projectToken: PROJECT_TOKEN,
@@ -39,7 +60,12 @@ async function boot(balance: bigint, alreadyClaimed = 0n) {
   );
   await new Promise((resolve) => server.once("listening", resolve));
   const port = (server.address() as { port: number }).port;
-  return { server, base: `http://127.0.0.1:${port}`, entitlements };
+  return {
+    server,
+    base: `http://127.0.0.1:${port}`,
+    entitlements,
+    vaultReads: () => vaultReads
+  };
 }
 
 // Responses are checked field by field below; a permissive shape keeps the
@@ -182,7 +208,7 @@ test("баланс ниже порога не даёт права майнить
 });
 
 test("claimable есть кумулятив минус уже забранное", async (t) => {
-  const { server, base, entitlements } = await boot(MIN, 40n);
+  const { server, base, entitlements } = await boot(MIN, { alreadyClaimed: 40n });
   t.after(() => server.close());
 
   entitlements.save(new Map([[ACCOUNT, 100n]]));
@@ -196,11 +222,70 @@ test("claimable есть кумулятив минус уже забранное
 
 test("забранное сверх кумулятива не уводит claimable в минус", async (t) => {
   // Корень мог быть опубликован раньше, чем журнал догнал цепочку.
-  const { server, base, entitlements } = await boot(MIN, 500n);
+  const { server, base, entitlements } = await boot(MIN, { alreadyClaimed: 500n });
   t.after(() => server.close());
 
   entitlements.save(new Map([[ACCOUNT, 100n]]));
   const body = (await (await fetch(`${base}/v1/me?account=${ACCOUNT}`)).json()) as JsonBody;
 
   assert.equal(body.claimable, "0");
+});
+
+test("stats отдаёт живые числа фонда", async (t) => {
+  const { server, base } = await boot(MIN);
+  t.after(() => server.close());
+
+  const body = (await (await fetch(`${base}/v1/stats`)).json()) as JsonBody;
+
+  assert.equal(body.vaultBalance, "7");
+  assert.equal(body.totalReleased, "5");
+  assert.equal(body.totalClaimed, "3");
+  assert.equal(typeof body.serverTime, "number");
+});
+
+test("состояние вольта читается с цепочки один раз на всех", async (t) => {
+  // Каждая открытая вкладка опрашивает stats, а продукт как раз и просит
+  // держать вкладки открытыми. Без кэша посетители стали бы генератором
+  // нагрузки на собственный RPC.
+  const { server, base, vaultReads } = await boot(MIN);
+  t.after(() => server.close());
+
+  await Promise.all(Array.from({ length: 8 }, () => fetch(`${base}/v1/stats`)));
+  await fetch(`${base}/v1/stats`);
+
+  assert.equal(vaultReads(), 1, "девять запросов обязаны стоить одного чтения цепочки");
+});
+
+test("недоступный RPC не роняет stats", async (t) => {
+  const { server, base } = await boot(MIN, {
+    vaultState: async () => {
+      throw new Error("rpc unreachable");
+    }
+  });
+  t.after(() => server.close());
+
+  const response = await fetch(`${base}/v1/stats`);
+  assert.equal(response.status, 200, "числа украшают секцию, а не открывают доступ");
+
+  const body = (await response.json()) as JsonBody;
+  assert.equal(body.vaultBalance, null);
+  assert.equal(typeof body.activeMiners, "number", "остальное считается локально и обязано работать");
+});
+
+test("обратный отсчёт ведётся до настоящей публикации", async (t) => {
+  const { server, base } = await boot(MIN, { lastPublished: 5_900_000, settledAfter: 4 });
+  t.after(() => server.close());
+
+  const body = (await (await fetch(`${base}/v1/stats`)).json()) as JsonBody;
+
+  assert.equal(body.lastPublishedEpoch, 5_900_000);
+  assert.equal(body.epochsUntilPublish, 2, "паблишеру нужно шесть эпох, четыре уже есть");
+});
+
+test("просроченная публикация не уходит в минус", async (t) => {
+  const { server, base } = await boot(MIN, { settledAfter: 9 });
+  t.after(() => server.close());
+
+  const body = (await (await fetch(`${base}/v1/stats`)).json()) as JsonBody;
+  assert.equal(body.epochsUntilPublish, 0, "отсчёт останавливается на нуле, а не идёт назад");
 });

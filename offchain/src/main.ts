@@ -40,6 +40,8 @@ const server = startServer(
     heartbeats,
     entitlements,
     reader,
+    roots,
+    epochs,
     minBalance: config.minBalance,
     vaultAddress: config.rewardVault,
     projectToken: config.projectToken,

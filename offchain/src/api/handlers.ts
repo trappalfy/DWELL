@@ -10,6 +10,7 @@ import type { Routes } from "./router.ts";
 import type { HeartbeatStore } from "../db/heartbeats.ts";
 import type { EntitlementStore } from "../db/entitlements.ts";
 import type { Address, VaultState } from "../types.ts";
+import type { Backdrop } from "../backdrop.ts";
 
 export interface HandlerDeps {
   readonly heartbeats: HeartbeatStore;
@@ -22,6 +23,8 @@ export interface HandlerDeps {
   };
   readonly roots: { lastPublished(): number | null };
   readonly epochs: { countSettledAfter(epoch: number | null): number };
+  /** Empty sources mean no video is installed; the page keeps its own sky. */
+  readonly backdrop: Backdrop;
   readonly minBalance: bigint;
   readonly vaultAddress: Address;
   readonly projectToken: Address;
@@ -200,7 +203,8 @@ export function createHandlers(deps: HandlerDeps): Routes {
         epochSeconds: EPOCH_SECONDS,
         bucketSeconds: BUCKET_SECONDS,
         claimDelaySeconds: CLAIM_DELAY_SECONDS,
-        publishEveryEpochs: PUBLISH_EVERY_EPOCHS
+        publishEveryEpochs: PUBLISH_EVERY_EPOCHS,
+        backdrop: deps.backdrop
       }
     }),
 

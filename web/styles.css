@@ -130,6 +130,34 @@ a {
 
 /* ---------------------------------------------------------------- layers */
 
+/*
+ * The optional backdrop.
+ *
+ * It sits above the page's own gradient rather than replacing it, so the
+ * ground is already painted before the first frame decodes and stays painted
+ * if the file is missing or the browser refuses it. When it is playing, the
+ * drawn sky underneath is switched off — two skies at once is one too many.
+ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  display: none;
+}
+
+[data-backdrop="video"] .backdrop {
+  display: block;
+}
+
+[data-backdrop="video"] .clouds,
+[data-backdrop="video"] .sky {
+  display: none;
+}
+
 .sky,
 .clouds,
 .vignette {

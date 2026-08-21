@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { resolveStaticFile } from "./static.ts";
+import { createReadStream } from "node:fs";
+import { resolveStaticFile, readStaticFile, parseRange, type StaticHit } from "./static.ts";
 
 export interface RouteContext {
   readonly body: unknown;
@@ -40,6 +41,48 @@ export interface RouterOptions {
   readonly staticRoot?: string;
 }
 
+/**
+ * Answers a media request, honouring a byte range when one is asked for.
+ *
+ * The body is piped rather than buffered: a backdrop video is orders of
+ * magnitude larger than anything else here, and the page asks people to keep
+ * the tab open for hours, so holding a copy per request is not an option.
+ */
+function sendMedia(request: IncomingMessage, response: ServerResponse, hit: StaticHit): void {
+  const range = parseRange(request.headers.range, hit.size);
+
+  if (range === "unsatisfiable") {
+    response.writeHead(416, {
+      "content-range": `bytes */${hit.size}`,
+      "accept-ranges": "bytes",
+      ...CORS_HEADERS
+    });
+    response.end();
+    return;
+  }
+
+  const headers: Record<string, string> = {
+    "content-type": hit.contentType,
+    "accept-ranges": "bytes",
+    // The backdrop never changes without its filename changing, and it is the
+    // heaviest thing on the page; re-fetching it on every visit is waste.
+    "cache-control": "public, max-age=604800",
+    ...CORS_HEADERS
+  };
+
+  if (!range) {
+    headers["content-length"] = String(hit.size);
+    response.writeHead(200, headers);
+    createReadStream(hit.absolutePath).pipe(response);
+    return;
+  }
+
+  headers["content-length"] = String(range.end - range.start + 1);
+  headers["content-range"] = `bytes ${range.start}-${range.end}/${hit.size}`;
+  response.writeHead(206, headers);
+  createReadStream(hit.absolutePath, { start: range.start, end: range.end }).pipe(response);
+}
+
 export function createRouter(routes: Routes, options: RouterOptions = {}) {
   return async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -54,11 +97,15 @@ export function createRouter(routes: Routes, options: RouterOptions = {}) {
     // The API owns /v1; everything else is the page. Checked only after the
     // route table misses, so a bug in static serving can never shadow an
     // endpoint.
-    if (!handler && options.staticRoot && request.method === "GET") {
+    if (!handler && options.staticRoot && (request.method === "GET" || request.method === "HEAD")) {
       const file = resolveStaticFile(options.staticRoot, url.pathname);
       if (file) {
+        if (file.seekable) {
+          sendMedia(request, response, file);
+          return;
+        }
         response.writeHead(200, { "content-type": file.contentType, ...CORS_HEADERS });
-        response.end(file.body);
+        response.end(request.method === "HEAD" ? undefined : readStaticFile(file));
         return;
       }
     }

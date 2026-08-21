@@ -1,5 +1,6 @@
 import { encodeClaim } from "/lib/abi.js";
 import { startAtmosphere } from "/lib/atmosphere.js";
+import { startBackdrop } from "/lib/backdrop.js";
 import { armReveals, armTypewriters, wireAccordion, wireCarousel, wireTimeline } from "/lib/ui.js";
 
 const CHAIN_ID = 4663;
@@ -305,6 +306,32 @@ function render() {
     : "Connect wallet";
 }
 
+/* ---------- what paints behind everything ---------- */
+
+/**
+ * The video takes the background when one is installed and the browser will
+ * play it; otherwise the drawn sky does. Exactly one of them ever runs, and
+ * the page has a sky either way.
+ */
+function paintBackground() {
+  const sky = () =>
+    startAtmosphere({
+      canvas: document.getElementById("sky"),
+      bands: [
+        { element: document.querySelector(".band-far"), rate: 0.25 },
+        { element: document.querySelector(".band-mid"), rate: 0.45 },
+        { element: document.querySelector(".band-near"), rate: 0.7 }
+      ]
+    });
+
+  const took = startBackdrop({
+    video: document.getElementById("backdrop"),
+    config: state.config,
+    onGiveUp: sky
+  });
+  if (!took) sky();
+}
+
 /* ---------- start ---------- */
 
 async function start() {
@@ -313,15 +340,6 @@ async function start() {
   wireAccordion(document.getElementById("qa"));
   wireCarousel(document.getElementById("carousel"));
   wireTimeline(document.getElementById("pipeline"));
-
-  startAtmosphere({
-    canvas: document.getElementById("sky"),
-    bands: [
-      { element: document.querySelector(".band-far"), rate: 0.25 },
-      { element: document.querySelector(".band-mid"), rate: 0.45 },
-      { element: document.querySelector(".band-near"), rate: 0.7 }
-    ]
-  });
 
   els.connect.addEventListener("click", async () => {
     els.connect.disabled = true;
@@ -359,7 +377,14 @@ async function start() {
     if (currentState() === "burning") render();
   }, 30_000);
 
-  state.config = await api("/v1/config");
+  // The background depends on config, so it is fetched before either painter
+  // starts — and a failed fetch must still leave a sky behind the page.
+  try {
+    state.config = await api("/v1/config");
+  } finally {
+    paintBackground();
+  }
+
   await refresh();
   render();
 }

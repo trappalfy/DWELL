@@ -15,6 +15,7 @@ import { openDatabase } from "../src/db/open.ts";
 import { HeartbeatStore } from "../src/db/heartbeats.ts";
 import { EntitlementStore } from "../src/db/entitlements.ts";
 import { startServer } from "../src/server.ts";
+import { findBackdrop } from "../src/backdrop.ts";
 import { bucketOf } from "../src/epoch.ts";
 import type { Address } from "../src/types.ts";
 
@@ -39,6 +40,9 @@ const entitlements = new EntitlementStore(db);
 let vaultBalance = 57_600_000_000_000_000n; // ~$20 of TSLA, the real pre-charge
 let released = 0n;
 
+const webRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web");
+const backdrop = findBackdrop(webRoot);
+
 const server = startServer(
   {
     heartbeats,
@@ -56,13 +60,14 @@ const server = startServer(
     roots: { lastPublished: () => null },
     // Counts up so the settlement clock ticks down instead of standing still.
     epochs: { countSettledAfter: () => Math.floor(Date.now() / 60_000) % 7 },
+    backdrop,
     minBalance,
     vaultAddress: VAULT,
     projectToken: PROJECT_TOKEN,
     now: () => Date.now()
   },
   port,
-  { staticRoot: join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web") }
+  { staticRoot: webRoot }
 );
 
 /**

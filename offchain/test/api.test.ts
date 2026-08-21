@@ -49,6 +49,7 @@ async function boot(balance: bigint, options: BootOptions = {}) {
           return { balance: 7n, totalAllocated: 5n, totalClaimed: 3n };
         }
       },
+      backdrop: { sources: [], poster: null },
       roots: { lastPublished: () => options.lastPublished ?? null },
       epochs: { countSettledAfter: () => options.settledAfter ?? 0 },
       minBalance: MIN,
@@ -288,4 +289,14 @@ test("просроченная публикация не уходит в мин�
 
   const body = (await (await fetch(`${base}/v1/stats`)).json()) as JsonBody;
   assert.equal(body.epochsUntilPublish, 0, "отсчёт останавливается на нуле, а не идёт назад");
+});
+
+test("config сообщает странице, есть ли фоновое видео", async (t) => {
+  // Страница не должна угадывать наличие файла по 404: сервер знает точно,
+  // а фронт по этому ответу выбирает, что рисует фон — видео или канвас.
+  const { server, base } = await boot(MIN);
+  t.after(() => server.close());
+
+  const body = (await (await fetch(`${base}/v1/config`)).json()) as JsonBody;
+  assert.deepEqual(body.backdrop, { sources: [], poster: null });
 });

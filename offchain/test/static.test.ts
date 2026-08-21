@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveStaticFile } from "../src/api/static.ts";
+import { resolveStaticFile, readStaticFile, parseRange } from "../src/api/static.ts";
 
 const root = mkdtempSync(join(tmpdir(), "dwell-web-"));
 writeFileSync(join(root, "index.html"), "<h1>hearth</h1>");
@@ -11,12 +11,14 @@ writeFileSync(join(root, "styles.css"), "body{}");
 mkdirSync(join(root, "lib"), { recursive: true });
 writeFileSync(join(root, "lib", "abi.js"), "export const x = 1;");
 writeFileSync(join(root, "secret.env"), "KEEPER_PRIVATE_KEY=0xdead");
+mkdirSync(join(root, "media"), { recursive: true });
+writeFileSync(join(root, "media", "backdrop.webm"), Buffer.alloc(1000, 7));
 
 test("корень отдаёт index.html", () => {
   const hit = resolveStaticFile(root, "/");
   assert.ok(hit);
   assert.equal(hit.contentType, "text/html; charset=utf-8");
-  assert.equal(hit.body.toString(), "<h1>hearth</h1>");
+  assert.equal(readStaticFile(hit).toString(), "<h1>hearth</h1>");
 });
 
 test("вложенный файл отдаётся с верным типом", () => {
@@ -63,4 +65,42 @@ test("шрифты отдаются с типом, который браузер
   assert.equal(hit.contentType, "font/ttf");
 
   rmSync(dir, { recursive: true, force: true });
+});
+
+test("видео помечается как отдаваемое по диапазонам", () => {
+  // Safari отказывается проигрывать <video>, если сервер не отвечает на
+  // range-запросы: на iPhone фон оказался бы чёрным прямоугольником.
+  const hit = resolveStaticFile(root, "/media/backdrop.webm");
+  assert.ok(hit);
+  assert.equal(hit.contentType, "video/webm");
+  assert.equal(hit.seekable, true);
+  assert.equal(hit.size, 1000);
+});
+
+test("обычные ассеты по диапазонам не отдаются", () => {
+  const hit = resolveStaticFile(root, "/styles.css");
+  assert.ok(hit);
+  assert.equal(hit.seekable, false);
+});
+
+test("диапазон разбирается во всех формах, которые шлют плееры", () => {
+  assert.deepEqual(parseRange("bytes=0-99", 1000), { start: 0, end: 99 });
+  assert.deepEqual(parseRange("bytes=500-", 1000), { start: 500, end: 999 });
+  // Хвост файла: так плеер добирает метаданные в конце контейнера.
+  assert.deepEqual(parseRange("bytes=-200", 1000), { start: 800, end: 999 });
+  // Конец за последним байтом обрезается, а не отвергается: плееры
+  // регулярно просят больше, чем есть, на последнем куске.
+  assert.deepEqual(parseRange("bytes=900-5000", 1000), { start: 900, end: 999 });
+});
+
+test("отсутствующий или мусорный заголовок означает файл целиком", () => {
+  for (const header of [undefined, "", "items=0-9", "bytes=abc", "bytes=-", "bytes=0-9,20-29"]) {
+    assert.equal(parseRange(header, 1000), null, `не распознано как «целиком»: ${header}`);
+  }
+});
+
+test("диапазон вне файла обязан стать 416, а не тихой отдачей целиком", () => {
+  assert.equal(parseRange("bytes=1000-1099", 1000), "unsatisfiable");
+  assert.equal(parseRange("bytes=800-700", 1000), "unsatisfiable");
+  assert.equal(parseRange("bytes=-0", 1000), "unsatisfiable");
 });

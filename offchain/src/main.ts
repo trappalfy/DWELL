@@ -14,6 +14,7 @@ import { checkPublishedRoot } from "./worker/watchdog.ts";
 import { convertFeesIfDue } from "./worker/feeConverter.ts";
 import { startWorker } from "./worker/loop.ts";
 import { startServer } from "./server.ts";
+import { findBackdrop } from "./backdrop.ts";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -35,6 +36,9 @@ const alert = (message: string): void => {
   console.error(`[ALERT ${new Date().toISOString()}] ${message}`);
 };
 
+const webRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web");
+const backdrop = findBackdrop(webRoot);
+
 const server = startServer(
   {
     heartbeats,
@@ -42,13 +46,14 @@ const server = startServer(
     reader,
     roots,
     epochs,
+    backdrop,
     minBalance: config.minBalance,
     vaultAddress: config.rewardVault,
     projectToken: config.projectToken,
     now: () => Date.now()
   },
   config.port,
-  { staticRoot: join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web") }
+  { staticRoot: webRoot }
 );
 
 const worker = startWorker(

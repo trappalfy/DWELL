@@ -369,20 +369,6 @@ a {
   min-width: 0;
 }
 
-.built {
-  font-family: var(--body);
-  font-size: 15px;
-  line-height: 1.15;
-  letter-spacing: 0.06em;
-  color: var(--dusk);
-  text-align: right;
-}
-
-.built b {
-  color: var(--haze);
-  font-weight: 400;
-}
-
 /* --------------------------------------------------------------- buttons */
 
 .cta {
@@ -1471,10 +1457,6 @@ main {
     gap: calc(var(--u) * 5);
   }
 
-  .built {
-    display: none;
-  }
-
   .carousel {
     min-height: 560px;
   }
@@ -1543,12 +1525,12 @@ main {
 }
 
 /*
- * Below 768px nav is already gone and .built went earlier still (1024px), so
- * the header is down to just the brand mark and the connect button — but
- * the button grew wide enough at its desktop size, from making the small
- * text bigger earlier, that the two started crowding each other well before
- * the 480px step where the rest of the type scale shrinks. Caught by
- * rendering the page at 500-600px CSS width, not by guessing.
+ * Below 768px nav is already gone, so the header is down to just the brand
+ * mark and the connect button — but the button grew wide enough at its
+ * desktop size, from making the small text bigger earlier, that the two
+ * started crowding each other well before the 480px step where the rest of
+ * the type scale shrinks. Caught by rendering the page at 500-600px CSS
+ * width, not by guessing.
  */
 @media (max-width: 640px) {
   .brand {

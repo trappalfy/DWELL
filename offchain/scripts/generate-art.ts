@@ -75,30 +75,6 @@ for (const slide of SLIDES) {
   );
 }
 
-/*
- * The wordmark's flame, drawn tight to its own edges.
- *
- * The favicon cannot stand in for this: it is a flame sitting at the bottom
- * of a square, and seven blank rows of padding is not something a logo lockup
- * can align against. Sixteen rows tall so it scales to 48px at a whole 3x.
- */
-{
-  const patterns = new Patterns();
-  const outer = [10, 10, 10, 9, 9, 8, 7, 6, 5, 4, 3, 3, 2, 2, 1, 1];
-  const inner = [5, 6, 6, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0];
-  const body = outer
-    .map((width, row) => {
-      const core = inner[row]!;
-      const y = outer.length - 1 - row;
-      return (
-        box(6 - Math.round(width / 2), y, width, 1, "ember") +
-        (core > 0 ? box(6 - Math.round(core / 2), y, core, 1, "flame") : "")
-      );
-    })
-    .join("");
-  counts.mark = write("mark", scene({ width: 12, height: 16, label: "", patterns, body: `  ${body}` }));
-}
-
 // A flame alone, for the browser tab: at 16 pixels the room would be mud.
 {
   const patterns = new Patterns();

@@ -199,45 +199,18 @@ a {
   gap: calc(var(--u) * 4);
   max-width: var(--page);
   margin: 0 auto;
-  padding: calc(var(--u) * 3) var(--side);
+  padding: calc(var(--u) * 4) var(--side);
   backdrop-filter: blur(6px);
 }
 
-/*
- * The mark is a lockup, not a word: a lit flame beside the name, with the
- * last letter taking the ember the way the hero's headline does. It is the
- * only thing in the bar allowed to be loud.
- */
 .wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--u) * 3);
   font-family: var(--display);
-  font-size: 48px;
-  /* Never above 400 — see the note on faked bold above. */
+  font-size: 32px;
+  /* Never above 400: the face ships one Regular, and anything more is faked. */
   font-weight: 400;
-  letter-spacing: 0.1em;
-  line-height: 1;
+  letter-spacing: 0.16em;
   text-decoration: none;
   color: var(--linen);
-}
-
-.wordmark-flame {
-  width: 36px;
-  height: 48px;
-  flex: none;
-  /* A whole 3x of the 16-row source, so every art pixel stays square. */
-  filter: drop-shadow(0 0 10px rgba(255, 122, 52, 0.55));
-  transition: filter 160ms ease;
-}
-
-.wordmark-last {
-  color: var(--ember);
-}
-
-.wordmark:hover .wordmark-flame,
-.wordmark:focus-visible .wordmark-flame {
-  filter: drop-shadow(0 0 18px rgba(255, 194, 74, 0.85));
 }
 
 .nav {
@@ -1327,15 +1300,6 @@ main {
 
 @media (max-width: 768px) {
   /* Down one step on the 16px grid, never between steps. */
-  .wordmark {
-    font-size: 32px;
-  }
-
-  .wordmark-flame {
-    width: 24px;
-    height: 32px;
-  }
-
   .title {
     font-size: 48px;
   }

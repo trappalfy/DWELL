@@ -118,6 +118,16 @@
   --u: 4px;
   --page: 1200px;
   --side: 40px;
+
+  /*
+   * .bar's real rendered height (padding + tallest child), so .hero can size
+   * itself against what's actually left of the screen below a sticky header
+   * that sits in normal flow. Measured at the desktop breakpoint (80px);
+   * the header is shorter below 640px (62px), so this slightly under-uses
+   * the available height there rather than risk it the other way — a few
+   * idle pixels beats the section running past the fold again.
+   */
+  --header-h: 80px;
 }
 
 *,
@@ -442,7 +452,7 @@ main {
   /* Scopes .stage's negative z-index to this section, so it can't sink
      behind the page's own fixed sky/vignette layers. */
   isolation: isolate;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-h));
   display: flex;
   flex-direction: column;
   justify-content: center;

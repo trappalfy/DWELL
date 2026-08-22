@@ -512,10 +512,17 @@ main {
   height: auto;
 }
 
-/* The two scenes share a viewBox, so they overlay to the pixel. */
+/* The two scenes share a frame, so they overlay to the pixel. */
 .scene-interior {
   position: absolute;
   inset: 0;
+}
+
+.hearth-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .scene-exterior,
@@ -538,127 +545,44 @@ main {
 
 /* ------------------------------------------------- the fire is the status */
 
-.wall,
-.floor {
-  fill: var(--soot);
-}
-
-.pane {
-  fill: var(--glass);
-}
-
-.pane-hot {
-  fill: var(--flame);
-}
-
-.fl-outer {
-  fill: var(--ember);
-}
-
-.fl-inner {
-  fill: var(--flame);
-}
-
-.em-hot {
-  fill: var(--ember);
-}
-
-.glow-hot {
-  stop-color: var(--ember);
-  stop-opacity: 0.22;
-}
-
-.glow-out {
-  stop-color: var(--ember);
-  stop-opacity: 0;
-}
-
-.glow,
-.firelight,
-.embers,
-.smoke {
+/*
+ * The hearth is one photograph now, not layered SVG groups the page could
+ * fade independently. State reads through a scrim over the whole room
+ * instead: thick when the fire is barely alive, gone once it's burning.
+ */
+.scene-interior::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--soot);
+  opacity: 0;
   transition: opacity 700ms ease;
+  pointer-events: none;
 }
 
-.frame {
-  opacity: 0;
+/* Cold: coals barely alive, the room almost unlit. */
+[data-state="cold"] .scene-interior::after,
+[data-state="short"] .scene-interior::after {
+  opacity: 0.6;
 }
 
-/* Cold: no flame, coals barely alive, the room almost unlit. */
-[data-state="cold"] .firelight,
-[data-state="short"] .firelight {
-  opacity: 0.14;
+/* Banked: someone lit it and left. Dimmer than burning, brighter than cold. */
+[data-state="idle"] .scene-interior::after {
+  opacity: 0.3;
 }
 
-[data-state="cold"] .embers,
-[data-state="short"] .embers {
-  opacity: 0.35;
+/* Burning: the scrim lifts and the fire itself breathes, subtly. */
+[data-state="burning"] .hearth-art {
+  animation: breathe 2400ms ease-in-out infinite;
 }
 
-[data-state="cold"] .glow,
-[data-state="short"] .glow {
-  opacity: 0.2;
-}
-
-[data-state="cold"] .smoke,
-[data-state="short"] .smoke,
-[data-state="idle"] .smoke {
-  opacity: 0;
-}
-
-/* Banked: someone lit it and left. Coals hold, nothing leaps. */
-[data-state="idle"] .firelight {
-  opacity: 0.4;
-}
-
-[data-state="idle"] .glow {
-  opacity: 0.45;
-}
-
-[data-state="idle"] .embers {
-  opacity: 0.8;
-}
-
-/* Burning: three frames, cycled. Two would read as a blink. */
-[data-state="burning"] .frame {
-  animation: flicker 420ms steps(1, end) infinite;
-}
-
-[data-state="burning"] .f2 {
-  animation-delay: 140ms;
-}
-
-[data-state="burning"] .f3 {
-  animation-delay: 280ms;
-}
-
-[data-state="burning"] .smoke {
-  animation: rise 4s ease-in-out infinite;
-}
-
-@keyframes flicker {
+@keyframes breathe {
   0%,
-  33% {
-    opacity: 1;
-  }
-  34%,
   100% {
-    opacity: 0;
-  }
-}
-
-@keyframes rise {
-  0% {
-    opacity: 0.15;
-    transform: translate(0, 4px);
+    filter: brightness(1);
   }
   50% {
-    opacity: 0.55;
-    transform: translate(3px, -2px);
-  }
-  100% {
-    opacity: 0.15;
-    transform: translate(6px, -8px);
+    filter: brightness(1.045);
   }
 }
 
@@ -1599,16 +1523,8 @@ main {
     scroll-behavior: auto;
   }
 
-  /* The fire holds one frame instead of flickering. */
-  [data-state="burning"] .frame {
-    animation: none;
-  }
-
-  [data-state="burning"] .f1 {
-    opacity: 1;
-  }
-
-  [data-state="burning"] .smoke,
+  /* The fire holds still instead of breathing. */
+  [data-state="burning"] .hearth-art,
   .chev-down,
   .tier-art {
     animation: none;

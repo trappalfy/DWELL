@@ -1,6 +1,6 @@
 /**
  * Draws every pixel sprite the page uses — backdrops, motif slides, fuel
- * icons, the favicon — and writes each to web/art/*.svg.
+ * icons — and writes each to web/art/*.svg.
  *
  * The hero house scenes (exterior/interior) used to live here too, generated
  * the same way. They are now hand-authored raster art in web/art/*.webp
@@ -72,23 +72,14 @@ for (const slide of SLIDES) {
   );
 }
 
-// A flame alone, for the browser tab: at 16 pixels the room would be mud.
-{
-  const patterns = new Patterns();
-  const outer = [8, 8, 7, 6, 5, 4, 3, 2, 1];
-  const inner = [4, 4, 3, 3, 2, 1, 0, 0, 0];
-  const body = outer
-    .map((width, row) => {
-      const core = inner[row]!;
-      return (
-        box(8 - Math.round(width / 2), 15 - row, width, 1, "ember") +
-        (core > 0 ? box(8 - Math.round(core / 2), 15 - row, core, 1, "flame") : "")
-      );
-    })
-    .join("");
-  counts.favicon = write("favicon", scene({ width: 16, height: 16, label: "", patterns, body: `  ${body}` }));
-}
-
+/*
+ * The favicon is not generated here. It is reduced from web/art/logo.png,
+ * which is hand-made art and does not sit on a whole-pixel grid — its content
+ * box is 188x236, so no integer cell size divides it and any trace of it
+ * breaks the outline. web/art/favicon-16.png, favicon-32.png and
+ * apple-touch-icon.png are therefore committed assets, like the hearth
+ * scenes above.
+ */
 for (const spec of FUEL) {
   const patterns = new Patterns();
   counts[spec.name] = write(

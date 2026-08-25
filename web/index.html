@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>DWELL — the hearth burns while you're here</title>
     <meta name="description" content="Hold $DWELL, keep the tab visible, earn tokenized Tesla stock on Robinhood Chain."/>
-    <link rel="icon" href="/art/favicon.svg"/>
+    <!--
+      Two sizes rather than one: the browser picks without rescaling, and a
+      mark this small does not survive being resized twice. The 32 keeps hard
+      pixel edges, the 16 is resampled — at that size hard edges turn to noise.
+    -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/art/favicon-32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/art/favicon-16.png"/>
+    <link rel="apple-touch-icon" href="/art/apple-touch-icon.png"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400&family=Karla:wght@400;500&display=swap" rel="stylesheet"/>

@@ -120,7 +120,7 @@ test("облачные полосы не касаются шва замощен�
 test("отдельные файлы художки самодостаточны", () => {
   // Их читают через <img>, куда стили страницы не дотягиваются: любой class
   // вместо fill остался бы там без цвета.
-  for (const name of ["clouds-far", "mech-hold", "mech-burn", "log-large", "favicon"]) {
+  for (const name of ["clouds-far", "mech-hold", "mech-burn", "log-large"]) {
     const svg = readFileSync(join(web, "art", `${name}.svg`), "utf8");
     assert.ok(svg.startsWith("<svg"), `${name}: не svg`);
     assert.ok(!/<rect[^>]*\sclass="/.test(svg), `${name}: класс вместо заливки в отдельном файле`);

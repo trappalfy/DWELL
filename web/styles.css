@@ -1015,109 +1015,79 @@ main {
   text-align: center;
 }
 
-/* -------------------------------------------------------------- pedestal */
+/* ------------------------------------------------------------------ flow */
 
 /*
- * A star, not three equal columns: the centre sits highest and the pair below
- * it flank, exactly as the reference lays out its podium.
+ * The path the reward actually travels, as four bordered stages.
+ *
+ * This section used to be a podium of live figures — vault balance, released,
+ * claimed, miners present. Before launch every one of them reads zero or
+ * close to it, which says "nothing is happening here" to a first-time
+ * reader, and inventing friendlier numbers was never on the table. Stating
+ * the mechanism instead is true at any point in the protocol's life, and it
+ * is the part that earns trust anyway. The figures are still served by
+ * /v1/stats and can come back once they mean something.
+ *
+ * An <ol> because the order is load-bearing: fees cannot be swapped before
+ * they are collected. Boxes wired by diamonds, rather than the dotted line
+ * used by the timeline above, so two horizontal sequences on one page do not
+ * read as the same device twice.
  */
-.pedestal {
+.flow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: end;
-  justify-items: center;
-  gap: calc(var(--u) * 6) calc(var(--u) * 4);
-  grid-template-areas:
-    ".     main .    "
-    "left  main right"
-    "mini1 .    mini2";
+  grid-template-columns: repeat(4, 1fr);
+  gap: calc(var(--u) * 6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.tier {
-  display: grid;
-  justify-items: center;
-  gap: var(--u);
-  text-align: center;
+.flow-step {
+  position: relative;
+  border: 1px solid var(--stone);
+  padding: calc(var(--u) * 5);
 }
 
-.tier-main {
-  grid-area: main;
+/* The diamond sitting midway across the gap to the next stage. */
+.flow-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--ember);
+  transform: translate(calc(50% + var(--u) * 3), -50%) rotate(45deg);
 }
 
-.tier-left {
-  grid-area: left;
-}
-
-.tier-right {
-  grid-area: right;
-}
-
-.tier-mini-1 {
-  grid-area: mini1;
-}
-
-.tier-mini-2 {
-  grid-area: mini2;
-}
-
-.tier-art {
-  margin-bottom: calc(var(--u) * 2);
-  animation: breathe 3.4s ease-in-out infinite;
-}
-
-.tier-main .tier-art {
-  animation-duration: 2.6s;
-  filter: drop-shadow(0 0 14px rgba(255, 122, 52, 0.55));
-}
-
-@keyframes breathe {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-.tier-label {
+.flow-tag {
+  display: block;
   font-family: var(--pixel);
   font-size: 24px;
+  /* See .cta for why the --pixel labels state this rather than inheriting. */
   line-height: 1.2;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--haze);
+  color: var(--ember);
 }
 
-.tier-value {
+.flow-title {
   font-family: var(--display);
   font-size: 21px;
   font-weight: 400;
   line-height: var(--lh-pixel);
   letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
   color: var(--linen);
+  margin: calc(var(--u) * 4) 0 calc(var(--u) * 3);
 }
 
-.tier-main .tier-value {
-  font-size: 35px;
-  color: var(--flame);
-}
-
-.tier-value-warm {
-  color: var(--ember);
-}
-
-.tier-value-cool {
+.flow-body {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.75;
   color: var(--haze);
+  margin: 0;
 }
-
-/*
- * The mini tiers used to step down a size from the pair beside them. On a
- * seven-pixel grid there is no step below the label size — the next one down
- * is half of it — so they now separate by placement and by the size of their
- * art, which is where the difference was really coming from anyway.
- */
 
 .footnote {
   font-family: var(--body);
@@ -1443,6 +1413,20 @@ main {
     margin-top: calc(var(--u) * 10);
     justify-content: flex-start;
   }
+
+  /*
+   * Four stages across is already a ribbon of text by this width — the
+   * display face is wide enough that the titles start breaking into three
+   * lines. They pair up instead.
+   */
+  .flow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* The diamond after stage two would point at the end of the row. */
+  .flow-step:nth-child(2n)::after {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1479,17 +1463,6 @@ main {
 
   .node {
     min-width: 150px;
-  }
-
-  /* The podium becomes a column, strongest first. */
-  .pedestal {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "main"
-      "left"
-      "right"
-      "mini1"
-      "mini2";
   }
 
   .slide-art::after {
@@ -1532,6 +1505,15 @@ main {
 @media (max-width: 480px) {
   :root {
     --side: 20px;
+  }
+
+  /* One stage at a time; every diamond would now sit off the row's end. */
+  .flow {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-step::after {
+    display: none;
   }
 
   .title {
@@ -1578,8 +1560,7 @@ main {
 
   /* The fire holds still instead of breathing. */
   [data-state="burning"] .hearth-art,
-  .chev-down,
-  .tier-art {
+  .chev-down {
     animation: none;
   }
 

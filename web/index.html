@@ -150,39 +150,48 @@
         <h2 class="term" id="fuel-h" style="--chars: 15">
           <span class="term-text"><span class="sigil">$</span> <span class="cmd">vi</span> HEARTH.yml</span>
         </h2>
-        <p class="section-lede">Every number here is read live from the chain.</p>
+        <p class="section-lede">
+          Where the fuel comes from. Every stage happens on-chain, and none of it can
+          reach the tokens sitting in your wallet.
+        </p>
 
-        <div class="pedestal">
-          <div class="tier tier-main">
-            <img class="tier-art" src="/art/log-large.svg" width="56" height="56" alt="" aria-hidden="true"/>
-            <span class="tier-label">In the hearth</span>
-            <span class="tier-value" id="f-vault">—</span>
-          </div>
+        <ol class="flow">
+          <li class="flow-step">
+            <span class="flow-tag">Intake</span>
+            <h3 class="flow-title">Trading fees</h3>
+            <p class="flow-body">
+              Every $DWELL trade pays a creator fee, and that fee is the protocol's
+              only income. Nothing is minted to cover it.
+            </p>
+          </li>
 
-          <div class="tier tier-side tier-left">
-            <img class="tier-art" src="/art/log-small.svg" width="40" height="40" alt="" aria-hidden="true"/>
-            <span class="tier-label">Released</span>
-            <span class="tier-value tier-value-warm" id="f-released">—</span>
-          </div>
+          <li class="flow-step">
+            <span class="flow-tag">Reserve</span>
+            <h3 class="flow-title">Held as ETH</h3>
+            <p class="flow-body">
+              Fees arrive as native ETH and wait on the keeper wallet until there is
+              enough to convert. A slice stays back so it can always afford to pause.
+            </p>
+          </li>
 
-          <div class="tier tier-side tier-right">
-            <img class="tier-art" src="/art/log-small.svg" width="40" height="40" alt="" aria-hidden="true"/>
-            <span class="tier-label">Claimed</span>
-            <span class="tier-value tier-value-cool" id="f-claimed">—</span>
-          </div>
+          <li class="flow-step">
+            <span class="flow-tag">Conversion</span>
+            <h3 class="flow-title">Swapped for TSLA</h3>
+            <p class="flow-body">
+              One transaction routes that ETH into tokenized Tesla stock and delivers it
+              straight to the vault, refusing any quote worse than two percent.
+            </p>
+          </li>
 
-          <div class="tier tier-mini tier-mini-1">
-            <img class="tier-art" src="/art/kindling.svg" width="24" height="24" alt="" aria-hidden="true"/>
-            <span class="tier-label">Tending now</span>
-            <span class="tier-value" id="f-miners">—</span>
-          </div>
-
-          <div class="tier tier-mini tier-mini-2">
-            <img class="tier-art" src="/art/kindling.svg" width="24" height="24" alt="" aria-hidden="true"/>
-            <span class="tier-label">Epoch</span>
-            <span class="tier-value" id="f-epoch">—</span>
-          </div>
-        </div>
+          <li class="flow-step">
+            <span class="flow-tag">Output</span>
+            <h3 class="flow-title">Claimed by miners</h3>
+            <p class="flow-body">
+              Your share is weighted by your balance and by how long your tab actually
+              stayed visible, then written into a Merkle root you claim against.
+            </p>
+          </li>
+        </ol>
 
         <p class="footnote">
           * The hearth refills only from trading fees on $DWELL. If trading stops, the fire goes out.

@@ -18,14 +18,7 @@ const els = {
   miners: document.getElementById("miners"),
   countdown: document.getElementById("countdown"),
   note: document.getElementById("countdown-note"),
-  clock: { h: document.getElementById("cd-h"), m: document.getElementById("cd-m"), s: document.getElementById("cd-s") },
-  fuel: {
-    vault: document.getElementById("f-vault"),
-    released: document.getElementById("f-released"),
-    claimed: document.getElementById("f-claimed"),
-    miners: document.getElementById("f-miners"),
-    epoch: document.getElementById("f-epoch")
-  }
+  clock: { h: document.getElementById("cd-h"), m: document.getElementById("cd-m"), s: document.getElementById("cd-s") }
 };
 
 const state = {
@@ -49,11 +42,6 @@ function formatUnits(value, decimals, places) {
   const fraction = digits.slice(-decimals).slice(0, places).padEnd(places, "0");
   const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return places > 0 ? grouped + "." + fraction : grouped;
-}
-
-/** A chain reading that failed shows a dash, never a zero that would be a lie. */
-function formatOrDash(value, places = 4) {
-  return value === null || value === undefined ? "—" : formatUnits(BigInt(value), 18, places);
 }
 
 function shortDuration(ms) {
@@ -270,16 +258,17 @@ function statusLine(mode) {
   return "The hearth is burning. Tended " + shortDuration(Date.now() - state.tendedSince) + ".";
 }
 
+/*
+ * Only the footer count is on the page now. The hearth section used to
+ * render the vault, released and claimed figures too; it explains the fee
+ * path instead, because before launch those all read zero. /v1/stats still
+ * carries them, so putting them back is a markup change, not a data one.
+ */
 function renderStats() {
   const stats = state.stats;
   if (!stats) return;
 
   els.miners.textContent = String(stats.activeMiners);
-  els.fuel.miners.textContent = String(stats.activeMiners);
-  els.fuel.epoch.textContent = String(stats.currentEpoch);
-  els.fuel.vault.textContent = formatOrDash(stats.vaultBalance);
-  els.fuel.released.textContent = formatOrDash(stats.totalReleased);
-  els.fuel.claimed.textContent = formatOrDash(stats.totalClaimed);
 }
 
 function render() {

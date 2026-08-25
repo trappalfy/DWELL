@@ -7,10 +7,17 @@ import type { Hex } from "viem";
  * importantly, to PAUSE. A wallet that swapped its last wei could not stop
  * the protocol in an emergency, which would quietly disarm the watchdog.
  *
- * At ~0.0203 gwei and ~105k gas a publish costs ~2.1e12 wei, so this covers
- * roughly five thousand transactions.
+ * It doubles as the unattended runway. The converter never spends below this
+ * line, so it is what the keeper lives on while no fees are arriving. A
+ * publish costs ~114k gas and happens 48 times a day; at ~0.025 gwei that is
+ * ~1.4e14 wei a day, so this holds about a week of publishing, or two days
+ * once a busy day of fee swaps is counted against it.
+ *
+ * Raise it in step with the keeper's funding: it is the operator's promise
+ * about how long the protocol can run between check-ins, and setting it
+ * above what the keeper actually holds stops conversion altogether.
  */
-export const GAS_RESERVE_WEI = 10n ** 16n;
+export const GAS_RESERVE_WEI = 10n ** 15n;
 
 export interface ConvertDeps {
   readonly purchases: PurchaseStore;

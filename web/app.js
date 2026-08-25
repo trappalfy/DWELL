@@ -282,11 +282,16 @@ function renderConfig() {
     els.minBalance.textContent = formatUnits(BigInt(config.minBalance), 18, 0);
   }
 
+  // Null until $DWELL is deployed. The markup already reads "Not published
+  // yet" with both actions inert, so there is nothing to undo here.
   const token = config.projectToken;
   if (!token) return;
 
   els.address.textContent = token;
+  els.address.classList.remove("is-pending");
   els.scanAddress.href = EXPLORER + "/address/" + token;
+  els.scanAddress.removeAttribute("aria-disabled");
+  els.scanAddress.removeAttribute("tabindex");
   els.copyAddress.disabled = false;
 }
 

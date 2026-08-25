@@ -1241,9 +1241,22 @@ main {
   color: var(--flame);
 }
 
-.addr-btn:disabled {
+.addr-btn:disabled,
+.addr-btn[aria-disabled="true"] {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* aria-disabled is advisory on a link; this is what actually stops the click. */
+.addr-btn[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+/* Not an address but a status, so it does not read as a value to copy. */
+.addr-value.is-pending {
+  font-family: var(--body);
+  letter-spacing: 0.04em;
+  color: var(--dusk);
 }
 
 /* ------------------------------------------------------------------- faq */

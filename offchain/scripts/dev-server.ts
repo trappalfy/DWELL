@@ -31,7 +31,13 @@ const CREDIT_PER_TICK = 40_000_000_000_000n;
 const TICK_MS = 10_000;
 
 const VAULT = "0xeeee000000000000000000000000000000000003" as Address;
-const PROJECT_TOKEN = "0xdddd000000000000000000000000000000000004" as Address;
+
+/**
+ * Null on purpose: $DWELL is not deployed, so there is no address to show.
+ * A stand-in here would be printed by the page as if it were the real one,
+ * which is the single most expensive thing this page could get wrong.
+ */
+const PROJECT_TOKEN = null;
 
 const db = openDatabase(":memory:");
 const heartbeats = new HeartbeatStore(db);

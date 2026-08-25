@@ -27,7 +27,15 @@ export interface HandlerDeps {
   readonly backdrop: Backdrop;
   readonly minBalance: bigint;
   readonly vaultAddress: Address;
-  readonly projectToken: Address;
+  /**
+   * Null until the token is deployed. The page then says so outright rather
+   * than printing a stand-in address: this chain carries impostor tokens
+   * under the same name, so a plausible-looking wrong address is the one
+   * mistake here that costs a reader money. Only echoed to the client —
+   * balances are read against RuntimeConfig.projectToken, which the
+   * protocol cannot run without.
+   */
+  readonly projectToken: Address | null;
   readonly now: () => number;
 }
 

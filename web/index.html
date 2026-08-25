@@ -198,35 +198,66 @@
         </p>
       </section>
 
-      <section class="section mechanics" id="mechanics" aria-labelledby="mech-h">
-        <h2 class="term" id="mech-h" style="--chars: 17">
-          <span class="term-text"><span class="sigil">$</span> <span class="cmd">ls</span> -a MECHANICS</span>
+      <section class="section" id="mechanics" aria-labelledby="mech-h">
+        <h2 class="term" id="mech-h" style="--chars: 18">
+          <span class="term-text"><span class="sigil">$</span> <span class="cmd">cat</span> REQUIREMENTS</span>
         </h2>
+        <p class="section-lede">Your wallet keeps custody the whole time.</p>
 
-        <div class="carousel" id="carousel" data-slide="0">
-          <div class="slide-art" aria-hidden="true">
-            <span class="art art-0"></span>
-            <span class="art art-1"></span>
-            <span class="art art-2"></span>
-            <span class="art art-3"></span>
+        <dl class="conds">
+          <div class="cond">
+            <dt class="cond-label">Minimum balance</dt>
+            <dd class="cond-body">
+              <span class="cond-value" id="c-min">100,000</span>
+              <span class="cond-note">
+                $DWELL held in your own wallet. The protocol reads that balance and has
+                no permission to move it.
+              </span>
+            </dd>
           </div>
 
-          <div class="slide-copy">
-            <h3 class="slide-name" id="slide-name">HOLD</h3>
-            <p class="slide-text" id="slide-text">
-              Your wallet balance is the whole rig. Keep 100,000 $DWELL and the protocol
-              counts you in. It reads your balance and can never move it: no deposit, no
-              lockup, no withdrawal queue.
-            </p>
+          <div class="cond">
+            <dt class="cond-label">Tab state</dt>
+            <dd class="cond-body">
+              <span class="cond-value">Visible</span>
+              <span class="cond-note">
+                Weight accrues only while this page is actually on screen. Hide it and
+                counting stops the same second.
+              </span>
+            </dd>
           </div>
 
-          <div class="thumbs">
-            <button class="chev chev-left" type="button" data-step="-1" aria-label="Previous"></button>
-            <button class="thumb is-active" type="button" data-index="0" aria-label="Hold"></button>
-            <button class="thumb" type="button" data-index="1" aria-label="Tend"></button>
-            <button class="thumb" type="button" data-index="2" aria-label="Burn"></button>
-            <button class="thumb" type="button" data-index="3" aria-label="Claim"></button>
-            <button class="chev chev-right" type="button" data-step="1" aria-label="Next"></button>
+          <div class="cond">
+            <dt class="cond-label">Network</dt>
+            <dd class="cond-body">
+              <span class="cond-value">4663</span>
+              <span class="cond-note">
+                Robinhood Chain. Rewards are paid in tokenized Tesla stock, bought
+                against native ETH.
+              </span>
+            </dd>
+          </div>
+
+          <div class="cond">
+            <dt class="cond-label">Deposit</dt>
+            <dd class="cond-body">
+              <span class="cond-value">None</span>
+              <span class="cond-note">
+                Nothing is sent, nothing is locked, and there is no withdrawal queue to
+                wait in. There are no locks at all.
+              </span>
+            </dd>
+          </div>
+        </dl>
+
+        <div class="addr">
+          <span class="addr-tag">$DWELL</span>
+          <code class="addr-value" id="token-address">Not published yet</code>
+          <div class="addr-actions">
+            <button class="addr-btn" id="copy-address" type="button" disabled>Copy</button>
+            <a class="addr-btn" id="scan-address" href="https://robinhoodchain.blockscout.com"
+               target="_blank" rel="noopener">Scan</a>
+            <a class="addr-btn" href="https://x.com/dwellprotocol" target="_blank" rel="noopener">X</a>
           </div>
         </div>
       </section>

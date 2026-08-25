@@ -1100,166 +1100,150 @@ main {
   max-width: 70ch;
 }
 
-/* -------------------------------------------------------------- carousel */
+/* ------------------------------------------------------ operating conditions */
 
-.mechanics {
-  padding-inline: 0;
-}
-
-.mechanics .term,
-.mechanics .section-lede {
-  padding-inline: var(--side);
-}
-
-.carousel {
-  position: relative;
-  min-height: 640px;
+/*
+ * The four conditions for mining, as one filled band.
+ *
+ * This section used to be a carousel of HOLD / TEND / BURN / CLAIM. Its
+ * content survives elsewhere — the timeline above states the schedule and
+ * the flow states where the reward comes from — and a gallery you have to
+ * click through hid three quarters of the answer to "can I do this?" behind
+ * an interaction most readers never start.
+ *
+ * Filled band with internal dividers, deliberately unlike the outlined,
+ * diamond-linked boxes of .flow directly above: three sequences of cards in
+ * a row would otherwise read as one device repeated.
+ */
+.conds {
   display: grid;
-  align-content: center;
-  padding: calc(var(--u) * 16) var(--side);
-  overflow: hidden;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  background: var(--soot);
+  border: 1px solid var(--stone);
 }
 
-.slide-art {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+.cond {
+  padding: calc(var(--u) * 5);
+  border-right: 1px solid var(--stone);
 }
 
-.art {
-  position: absolute;
-  inset: 0;
-  background-repeat: no-repeat;
-  background-position: center right;
-  background-size: cover;
-  opacity: 0;
-  transition: opacity 400ms ease;
+.cond:last-child {
+  border-right: 0;
 }
 
-/* A veil plus a leftward gradient, so the copy sits on ground dark enough to read. */
-.slide-art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right, rgba(10, 10, 20, 0.96) 22%, rgba(10, 10, 20, 0.35) 70%),
-    rgba(11, 10, 25, 0.5);
+.cond-label {
+  font-family: var(--pixel);
+  font-size: 24px;
+  /* See .cta for why the --pixel labels state this rather than inheriting. */
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--haze);
 }
 
-.art-0 {
-  background-image: url("/art/mech-hold.svg");
+.cond-body {
+  display: grid;
+  gap: calc(var(--u) * 3);
+  margin: calc(var(--u) * 4) 0 0;
 }
 
-.art-1 {
-  background-image: url("/art/mech-tend.svg");
-}
-
-.art-2 {
-  background-image: url("/art/mech-burn.svg");
-}
-
-.art-3 {
-  background-image: url("/art/mech-claim.svg");
-}
-
-.carousel[data-slide="0"] .art-0,
-.carousel[data-slide="1"] .art-1,
-.carousel[data-slide="2"] .art-2,
-.carousel[data-slide="3"] .art-3 {
-  opacity: 1;
-}
-
-.slide-copy {
-  max-width: 380px;
-}
-
-.slide-name {
+.cond-value {
   font-family: var(--display);
   font-size: 35px;
   font-weight: 400;
   line-height: var(--lh-pixel);
-  letter-spacing: var(--px-gap);
-  margin: 0 0 calc(var(--u) * 4);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--flame);
 }
 
-.slide-text {
-  font-size: 16px;
+.cond-note {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.75;
   color: var(--haze);
-  margin: 0;
 }
 
-.slide-copy.is-turning .slide-name,
-.slide-copy.is-turning .slide-text {
-  opacity: 0;
-  transform: translateX(-20px);
+/* ----------------------------------------------------------- token address */
+
+/*
+ * The address is the one string on this page a reader will copy into a
+ * wallet, so it gets its own bar rather than a line of prose: a mistyped
+ * character here buys an impostor token, and this chain carries several.
+ */
+.addr {
+  display: flex;
+  align-items: stretch;
+  margin-top: calc(var(--u) * 6);
+  border: 1px solid var(--stone);
 }
 
-.slide-name,
-.slide-text {
-  transition:
-    opacity 220ms ease,
-    transform 220ms ease;
-}
-
-.thumbs {
-  position: absolute;
-  right: var(--side);
-  bottom: calc(var(--u) * 10);
+.addr-tag {
   display: flex;
   align-items: center;
-  gap: calc(var(--u) * 3);
+  padding: 0 calc(var(--u) * 4);
+  background: var(--soot);
+  border-right: 1px solid var(--stone);
+  font-family: var(--pixel);
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  color: var(--flame);
+  white-space: nowrap;
 }
 
-/* A fan of cards, as in the reference: each is turned, the live one is not. */
-.thumb {
-  width: 78px;
-  height: 112px;
-  border: 3px solid var(--haze);
-  background-color: var(--night-mid);
-  background-size: cover;
-  background-position: center;
+/*
+ * A system mono, not --display: forty-two hex characters in a face whose
+ * every glyph is eight design pixels wide would run past any viewport.
+ */
+.addr-value {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding: calc(var(--u) * 4);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--linen);
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.addr-value::-webkit-scrollbar {
+  display: none;
+}
+
+.addr-actions {
+  display: flex;
+  flex: none;
+}
+
+.addr-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 calc(var(--u) * 4);
+  border: 0;
+  border-left: 1px solid var(--stone);
+  background: transparent;
+  font-family: var(--pixel);
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--haze);
   cursor: pointer;
-  padding: 0;
-  transition:
-    transform 220ms ease,
-    border-color 220ms ease;
 }
 
-.thumb:nth-of-type(2) {
-  transform: rotate(-4deg);
+.addr-btn:hover:not(:disabled) {
+  background: var(--soot);
+  color: var(--flame);
 }
 
-.thumb:nth-of-type(3) {
-  transform: rotate(3deg);
-}
-
-.thumb:nth-of-type(4) {
-  transform: rotate(-2deg);
-}
-
-.thumb:nth-of-type(5) {
-  transform: rotate(4deg);
-}
-
-.thumb.is-active {
-  transform: rotate(0) scale(1.12);
-  border-color: var(--flame);
-}
-
-.thumb[data-index="0"] {
-  background-image: url("/art/mech-hold.svg");
-}
-
-.thumb[data-index="1"] {
-  background-image: url("/art/mech-tend.svg");
-}
-
-.thumb[data-index="2"] {
-  background-image: url("/art/mech-burn.svg");
-}
-
-.thumb[data-index="3"] {
-  background-image: url("/art/mech-claim.svg");
+.addr-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ------------------------------------------------------------------- faq */
@@ -1404,14 +1388,18 @@ main {
     gap: calc(var(--u) * 5);
   }
 
-  .carousel {
-    min-height: 560px;
+  /* Four conditions across is a ribbon of text by this width; they pair up. */
+  .conds {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .thumbs {
-    position: static;
-    margin-top: calc(var(--u) * 10);
-    justify-content: flex-start;
+  /* Every cell now ends a row or sits above one, so the seams change axis. */
+  .cond:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .cond:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--stone);
   }
 
   /*
@@ -1435,8 +1423,8 @@ main {
     font-size: 63px;
   }
 
-  .slide-name {
-    font-size: 21px;
+  .cond-value {
+    font-size: 28px;
   }
 
   .watermark {
@@ -1465,12 +1453,27 @@ main {
     min-width: 150px;
   }
 
-  .slide-art::after {
-    background: rgba(10, 10, 20, 0.72);
+  /*
+   * The address bar stacks: forty-two hex characters plus three actions
+   * cannot share a row this narrow without the address collapsing to a
+   * sliver. The tag rejoins the actions as one strip beneath it.
+   */
+  .addr {
+    flex-wrap: wrap;
   }
 
-  .slide-copy {
-    max-width: none;
+  .addr-value {
+    order: -1;
+    flex: 1 0 100%;
+    border-bottom: 1px solid var(--stone);
+  }
+
+  .addr-tag {
+    border-right: 0;
+  }
+
+  .addr-actions {
+    margin-left: auto;
   }
 }
 
@@ -1541,9 +1544,18 @@ main {
     display: none;
   }
 
-  .thumb {
-    width: 60px;
-    height: 86px;
+  /* One condition at a time; the seams run horizontally all the way down. */
+  .conds {
+    grid-template-columns: 1fr;
+  }
+
+  .cond {
+    border-right: 0;
+    border-bottom: 1px solid var(--stone);
+  }
+
+  .cond:last-child {
+    border-bottom: 0;
   }
 
   .qa button {

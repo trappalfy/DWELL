@@ -1,7 +1,7 @@
 import { encodeClaim } from "/lib/abi.js";
 import { startAtmosphere } from "/lib/atmosphere.js";
 import { startBackdrop } from "/lib/backdrop.js";
-import { armReveals, armTypewriters, wireAccordion, wireCarousel, wireTimeline } from "/lib/ui.js";
+import { armReveals, armTypewriters, wireAccordion, wireTimeline } from "/lib/ui.js";
 
 const CHAIN_ID = 4663;
 const CHAIN_ID_HEX = "0x1237";
@@ -18,8 +18,15 @@ const els = {
   miners: document.getElementById("miners"),
   countdown: document.getElementById("countdown"),
   note: document.getElementById("countdown-note"),
-  clock: { h: document.getElementById("cd-h"), m: document.getElementById("cd-m"), s: document.getElementById("cd-s") }
+  clock: { h: document.getElementById("cd-h"), m: document.getElementById("cd-m"), s: document.getElementById("cd-s") },
+  minBalance: document.getElementById("c-min"),
+  address: document.getElementById("token-address"),
+  copyAddress: document.getElementById("copy-address"),
+  scanAddress: document.getElementById("scan-address")
 };
+
+/** Where a reader goes to check an address against the chain itself. */
+const EXPLORER = "https://robinhoodchain.blockscout.com";
 
 const state = {
   config: null,
@@ -258,6 +265,50 @@ function statusLine(mode) {
   return "The hearth is burning. Tended " + shortDuration(Date.now() - state.tendedSince) + ".";
 }
 
+/**
+ * Paints the two facts the requirements section takes from the server.
+ *
+ * Both are read rather than written into the markup on purpose. The
+ * threshold is an operator setting, so a hardcoded "100,000" would quietly
+ * go stale the day it changes; the token address is worse than stale if it
+ * is wrong, because this chain carries impostor tokens under the same name,
+ * and a reader copying the wrong one buys a worthless copy.
+ */
+function renderConfig() {
+  const config = state.config;
+  if (!config) return;
+
+  if (config.minBalance) {
+    els.minBalance.textContent = formatUnits(BigInt(config.minBalance), 18, 0);
+  }
+
+  const token = config.projectToken;
+  if (!token) return;
+
+  els.address.textContent = token;
+  els.scanAddress.href = EXPLORER + "/address/" + token;
+  els.copyAddress.disabled = false;
+}
+
+/** Copies the address, and says so — a silent copy reads as a dead button. */
+function wireCopyAddress() {
+  els.copyAddress.addEventListener("click", async () => {
+    const token = state.config && state.config.projectToken;
+    if (!token) return;
+
+    try {
+      await navigator.clipboard.writeText(token);
+      els.copyAddress.textContent = "Copied";
+    } catch {
+      // Clipboard access can be refused outright; selecting the text still works.
+      els.copyAddress.textContent = "Select it";
+    }
+    setTimeout(() => {
+      els.copyAddress.textContent = "Copy";
+    }, 1600);
+  });
+}
+
 /*
  * Only the footer count is on the page now. The hearth section used to
  * render the vault, released and claimed figures too; it explains the fee
@@ -327,8 +378,8 @@ async function start() {
   armReveals();
   armTypewriters();
   wireAccordion(document.getElementById("qa"));
-  wireCarousel(document.getElementById("carousel"));
   wireTimeline(document.getElementById("pipeline"));
+  wireCopyAddress();
 
   els.connect.addEventListener("click", async () => {
     els.connect.disabled = true;
@@ -370,6 +421,7 @@ async function start() {
   // starts — and a failed fetch must still leave a sky behind the page.
   try {
     state.config = await api("/v1/config");
+    renderConfig();
   } finally {
     paintBackground();
   }

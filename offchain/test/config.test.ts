@@ -126,3 +126,25 @@ test("токен проекта и актив награды — разные п
   assert.equal(config.projectToken, "0xdddd000000000000000000000000000000000004");
   assert.notEqual(config.projectToken, ADDRESSES.tsla, "вес считается по своему токену, награда — в TSLA");
 });
+
+test("без переменной прокси не доверяем", () => {
+  const config = loadRuntimeConfig(VALID_ENV);
+  assert.equal(config.trustedProxyHops, 0, "по умолчанию заголовок игнорируется");
+});
+
+test("число доверенных прокси читается из окружения", () => {
+  const config = loadRuntimeConfig({ ...VALID_ENV, TRUSTED_PROXY_HOPS: "1" });
+  assert.equal(config.trustedProxyHops, 1);
+});
+
+test("мусор в числе доверенных прокси отвергается на старте", () => {
+  // Молча превратившись в NaN, эта переменная тихо вернула бы лимит,
+  // считающийся по адресу прокси, — то есть один на весь мир.
+  for (const bad of ["нет", "-1", "1.5", ""]) {
+    assert.throws(
+      () => loadRuntimeConfig({ ...VALID_ENV, TRUSTED_PROXY_HOPS: bad }),
+      /TRUSTED_PROXY_HOPS/,
+      `значение ${JSON.stringify(bad)} обязано быть отвергнуто`
+    );
+  }
+});

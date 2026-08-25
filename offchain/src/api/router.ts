@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { clientIp } from "./clientIp.ts";
 import { createReadStream } from "node:fs";
 import { resolveStaticFile, readStaticFile, parseRange, type StaticHit } from "./static.ts";
 
@@ -39,6 +40,15 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
 export interface RouterOptions {
   /** Directory served for paths outside /v1. Omit to serve the API alone. */
   readonly staticRoot?: string;
+  /**
+   * How many reverse proxies this server actually runs behind.
+   *
+   * Deployment knowledge that cannot be inferred from a request: it decides
+   * which X-Forwarded-For entry is the real client. Zero — the default —
+   * means no proxy, so the header is ignored entirely and the socket peer is
+   * used. See clientIp for why the count is taken from the right.
+   */
+  readonly trustedProxyHops?: number;
 }
 
 /**
@@ -126,7 +136,7 @@ export function createRouter(routes: Routes, options: RouterOptions = {}) {
         body,
         url,
         bearer,
-        ip: request.socket.remoteAddress ?? "unknown"
+        ip: clientIp(request, options.trustedProxyHops ?? 0)
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "bad request";

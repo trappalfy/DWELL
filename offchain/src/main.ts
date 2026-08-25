@@ -53,7 +53,7 @@ const server = startServer(
     now: () => Date.now()
   },
   config.port,
-  { staticRoot: webRoot }
+  { staticRoot: webRoot, trustedProxyHops: config.trustedProxyHops }
 );
 
 const worker = startWorker(

@@ -44,6 +44,8 @@ export interface RuntimeConfig {
   readonly minBalance: bigint;
   readonly databasePath: string;
   readonly port: number;
+  /** Reverse proxies in front of us; decides which forwarded address to believe. */
+  readonly trustedProxyHops: number;
 }
 
 function required(env: NodeJS.ProcessEnv, key: string): string {
@@ -60,6 +62,23 @@ function requireAddress(env: NodeJS.ProcessEnv, key: string): Address {
   return value as Address;
 }
 
+/**
+ * How many reverse proxies the server runs behind, from TRUSTED_PROXY_HOPS.
+ *
+ * Zero by default, and a malformed value is refused rather than coerced. A
+ * silent NaN here would send every visitor into one rate-limit bucket — the
+ * limiter would then be counting the proxy, not the client, and the sixth
+ * person to sign in within a minute would be turned away.
+ */
+function proxyHops(env: NodeJS.ProcessEnv): number {
+  const raw = env.TRUSTED_PROXY_HOPS;
+  if (raw === undefined) return 0;
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(`TRUSTED_PROXY_HOPS must be a non-negative integer, got "${raw}"`);
+  }
+  return Number(raw);
+}
+
 /** Reads deployment-specific values. Secrets are never returned from here. */
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   return {
@@ -70,7 +89,8 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
     projectToken: requireAddress(env, "PROJECT_TOKEN"),
     minBalance: BigInt(required(env, "MIN_BALANCE")) * 10n ** 18n,
     databasePath: required(env, "DATABASE_PATH"),
-    port: Number(env.PORT ?? 8787)
+    port: Number(env.PORT ?? 8787),
+    trustedProxyHops: proxyHops(env)
   };
 }
 

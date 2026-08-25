@@ -24,6 +24,8 @@ interface BootOptions {
     totalAllocated: bigint;
     totalClaimed: bigint;
   }>;
+  /** Router settings, so a test can stand the server behind a proxy. */
+  readonly router?: { readonly trustedProxyHops?: number };
 }
 
 // Port 0 asks the OS for a free port, but the assignment is only readable
@@ -57,7 +59,8 @@ async function boot(balance: bigint, options: BootOptions = {}) {
       projectToken: PROJECT_TOKEN,
       now: () => Date.now()
     },
-    0
+    0,
+    options.router ?? {}
   );
   await new Promise((resolve) => server.once("listening", resolve));
   const port = (server.address() as { port: number }).port;
@@ -299,4 +302,59 @@ test("config сообщает странице, есть ли фоновое в�
 
   const body = (await (await fetch(`${base}/v1/config`)).json()) as JsonBody;
   assert.deepEqual(body.backdrop, { sources: [], poster: null });
+});
+
+/** Челлендж с подставленным заголовком прокси. */
+async function challengeAs(
+  base: string,
+  forwardedFor: string,
+  account: Address
+): Promise<number> {
+  const response = await fetch(`${base}/v1/session/challenge`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": forwardedFor },
+    body: JSON.stringify({ account })
+  });
+  return response.status;
+}
+
+test("за прокси лимит челленджа считается по клиенту, а не по прокси", async (t) => {
+  const { server, base } = await boot(MIN, { router: { trustedProxyHops: 1 } });
+  t.after(() => server.close());
+
+  // Ёмкость ведра — пять. Шесть РАЗНЫХ клиентов обязаны пройти все:
+  // за прокси у них один и тот же адрес сокета, и без разбора заголовка
+  // шестой получил бы отказ.
+  const statuses: number[] = [];
+  for (let i = 1; i <= 6; i++) {
+    statuses.push(await challengeAs(base, `198.51.100.${i}`, ACCOUNT));
+  }
+
+  assert.deepEqual(statuses, [200, 200, 200, 200, 200, 200]);
+});
+
+test("за прокси лимит всё ещё держит одного клиента", async (t) => {
+  const { server, base } = await boot(MIN, { router: { trustedProxyHops: 1 } });
+  t.after(() => server.close());
+
+  const statuses: number[] = [];
+  for (let i = 0; i < 6; i++) {
+    statuses.push(await challengeAs(base, "198.51.100.7", ACCOUNT));
+  }
+
+  assert.deepEqual(statuses.slice(0, 5), [200, 200, 200, 200, 200]);
+  assert.equal(statuses[5], 429, "шестой запрос одного клиента обязан быть отбит");
+});
+
+test("без доверенных прокси заголовок не даёт обойти лимит", async (t) => {
+  const { server, base } = await boot(MIN);
+  t.after(() => server.close());
+
+  // Прокси нет, значит заголовок пришёл от клиента и верить ему нельзя.
+  const statuses: number[] = [];
+  for (let i = 1; i <= 6; i++) {
+    statuses.push(await challengeAs(base, `198.51.100.${i}`, ACCOUNT));
+  }
+
+  assert.equal(statuses[5], 429, "подделка заголовка не обязана открывать шестой запрос");
 });

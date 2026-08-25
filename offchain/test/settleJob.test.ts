@@ -103,3 +103,28 @@ test("сеттлмент детерминирован на тех же данн�
   assert.equal(left.totalAllocated, right.totalAllocated);
   assert.deepEqual([...left.cumulative], [...right.cumulative]);
 });
+
+test("первая намайненная эпоха отдаёт ровно 1/24 банка", async () => {
+  const bank = 86_400_000_000_000_000n; // 0.0864 TSLA
+  const { deps, heartbeats } = fixture(bank);
+  heartbeats.accept(A, 90);
+  heartbeats.fillBucket(90, 1, new Map([[A, 300n]]));
+
+  const result = await settleEpoch(deps, 3);
+
+  assert.equal(result.release, bank / 24n, "окно запуска, а не полураспад");
+});
+
+test("пустые эпохи не расходуют окно запуска", async () => {
+  const bank = 86_400_000_000_000_000n;
+  const { deps, heartbeats } = fixture(bank);
+
+  // Десять эпох подряд никого не было — они закрываются, но окно не трогают.
+  for (let epoch = 3; epoch < 13; epoch++) await settleEpoch(deps, epoch);
+
+  heartbeats.accept(A, 390);
+  heartbeats.fillBucket(390, 1, new Map([[A, 300n]]));
+  const result = await settleEpoch(deps, 13);
+
+  assert.equal(result.release, bank / 24n, "доля та же, что была бы в первой эпохе");
+});

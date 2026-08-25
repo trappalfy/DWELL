@@ -22,6 +22,8 @@ export interface SettlementInput {
   readonly vault: VaultState;
   readonly minBalance: bigint;
   readonly priorCumulative: ReadonlyMap<Address, bigint>;
+  /** Epochs that actually had miners, deciding whether the launch window still applies. */
+  readonly minedEpochs: number;
 }
 
 export interface SettlementResult {

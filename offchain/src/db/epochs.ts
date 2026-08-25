@@ -5,6 +5,7 @@ export class EpochStore {
   readonly #last;
   readonly #countAll;
   readonly #countAfter;
+  readonly #countMined;
 
   constructor(db: DatabaseSync) {
     this.#insert = db.prepare(
@@ -13,6 +14,8 @@ export class EpochStore {
     this.#last = db.prepare("SELECT max(epoch) AS epoch FROM epochs");
     this.#countAll = db.prepare("SELECT count(*) AS total FROM epochs");
     this.#countAfter = db.prepare("SELECT count(*) AS total FROM epochs WHERE epoch > ?");
+    // Weights are stored as decimal strings, so an empty epoch reads "0".
+    this.#countMined = db.prepare("SELECT count(*) AS total FROM epochs WHERE total_weight != '0'");
   }
 
   /** The primary key makes double settlement impossible at the storage layer. */
@@ -37,6 +40,19 @@ export class EpochStore {
     const row = (epoch === null ? this.#countAll.get() : this.#countAfter.get(epoch)) as
       | Record<string, unknown>
       | undefined;
+    return Number(row?.total ?? 0);
+  }
+
+  /**
+   * How many epochs actually had someone mining in them.
+   *
+   * Distinct from countSettledAfter, which counts every closed epoch: an
+   * epoch with nobody present is still settled, but it released nothing and
+   * must not consume the launch window. Spending the window on empty epochs
+   * would hand the bank to whatever hour the worker happened to start in.
+   */
+  countMined(): number {
+    const row = this.#countMined.get() as Record<string, unknown> | undefined;
     return Number(row?.total ?? 0);
   }
 

@@ -34,6 +34,23 @@ export const HALF_LIFE_EPOCHS = HALF_LIFE_HOURS * EPOCHS_PER_HOUR;
 export const RATE_WAD = 9_580_852_533_173_743n;
 
 /**
+ * Mined epochs the launch bank is spread across: 24 epochs of five minutes
+ * is two hours of somebody actually being here.
+ *
+ * Inside this window an epoch releases an equal share of the bank rather
+ * than a fraction of what is left. The half-life is right for a reserve fed
+ * by a continuous fee stream, but wrong for a one-off pre-charge handed out
+ * at launch: it would pay 11% of everything in the first five minutes, to
+ * whoever happened to be present before the announcement had spread. An
+ * equal split pays the same amount every epoch, so arriving an hour late
+ * still means a share of half the window.
+ *
+ * The counter advances on MINED epochs only, so the window is two hours of
+ * presence, not two hours of wall clock.
+ */
+export const LAUNCH_WINDOW_EPOCHS = 24;
+
+/**
  * Reward-asset balance not yet promised to anyone.
  *
  * Outstanding obligation is totalAllocated - totalClaimed: allocation only
@@ -54,7 +71,21 @@ export function unallocated(vault: VaultState): bigint {
  * free reserve. With no active weight nothing is released and the reserve is
  * left untouched for later epochs.
  */
-export function computeRelease(vault: VaultState, totalWeight: bigint): bigint {
+export function computeRelease(
+  vault: VaultState,
+  totalWeight: bigint,
+  minedEpochs: number
+): bigint {
   if (totalWeight <= 0n) return 0n;
-  return (unallocated(vault) * RATE_WAD) / WAD;
+  const free = unallocated(vault);
+
+  // Dividing by the epochs still to come, rather than by the window length,
+  // makes this self-correcting: fees that arrive mid-window are spread over
+  // what remains, and the final epoch hands over the exact remainder, so the
+  // bank lands whole with no dust left behind.
+  if (minedEpochs < LAUNCH_WINDOW_EPOCHS) {
+    return free / BigInt(LAUNCH_WINDOW_EPOCHS - minedEpochs);
+  }
+
+  return (free * RATE_WAD) / WAD;
 }

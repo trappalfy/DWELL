@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { settle } from "../src/settle.ts";
-import { RATE_WAD, WAD } from "../src/drip.ts";
+import { RATE_WAD, WAD, LAUNCH_WINDOW_EPOCHS } from "../src/drip.ts";
 import type { Address, HeartbeatRecord, SettlementInput } from "../src/types.ts";
 
 const A = "0xaaaa000000000000000000000000000000000001" as Address;
@@ -21,6 +21,8 @@ function input(overrides: Partial<SettlementInput> = {}): SettlementInput {
     vault: { balance: RESERVE, totalAllocated: 0n, totalClaimed: 0n },
     minBalance: MIN,
     priorCumulative: new Map<Address, bigint>(),
+    // По умолчанию окно запуска позади: эти тесты про установившийся режим.
+    minedEpochs: LAUNCH_WINDOW_EPOCHS,
     ...overrides
   };
 }

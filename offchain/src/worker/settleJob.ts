@@ -38,7 +38,10 @@ export async function settleEpoch(
     heartbeats,
     vault,
     minBalance: deps.minBalance,
-    priorCumulative
+    priorCumulative,
+    // Read before this epoch is marked settled, so the count is of epochs
+    // that came before rather than including the one being settled now.
+    minedEpochs: deps.epochs.countMined()
   });
 
   deps.epochs.markSettled(epoch, result.totalWeight, result.release);

@@ -133,3 +133,14 @@ test("недоступный путь к базе называет сам пут
     /cannot open database at \/definitely\/not\/a\/directory\/dwell\.db/
   );
 });
+
+test("countMined считает только эпохи, в которых кто-то майнил", () => {
+  const { epochs } = fresh();
+
+  epochs.markSettled(5_955_209, 1_000n, 42n);
+  epochs.markSettled(5_955_210, 0n, 0n); // никого не было
+  epochs.markSettled(5_955_211, 500n, 21n);
+
+  assert.equal(epochs.countSettledAfter(null), 3, "закрыты все три эпохи");
+  assert.equal(epochs.countMined(), 2, "пустая эпоха окно запуска не расходует");
+});

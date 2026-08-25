@@ -9,6 +9,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { robinhoodChain } from "./client.ts";
+import { assertMined } from "./receipt.ts";
 import { ADDRESSES, POOL_FEE, SLIPPAGE_BPS } from "../config.ts";
 import type { Address } from "../types.ts";
 
@@ -82,7 +83,7 @@ export class ChainWriter {
       args: [BigInt(epoch), root, totalAllocated]
     });
     const hash = await this.#wallet.writeContract(request);
-    await this.#public.waitForTransactionReceipt({ hash });
+    assertMined(await this.#public.waitForTransactionReceipt({ hash }), "publishRoot", hash);
     return hash;
   }
 
@@ -94,7 +95,7 @@ export class ChainWriter {
       functionName: "pause"
     });
     const hash = await this.#wallet.writeContract(request);
-    await this.#public.waitForTransactionReceipt({ hash });
+    assertMined(await this.#public.waitForTransactionReceipt({ hash }), "pause", hash);
     return hash;
   }
 
@@ -149,7 +150,11 @@ export class ChainWriter {
     });
 
     const txHash = await this.#wallet.writeContract(request);
-    await this.#public.waitForTransactionReceipt({ hash: txHash });
+    assertMined(
+      await this.#public.waitForTransactionReceipt({ hash: txHash }),
+      "exactInputSingle",
+      txHash
+    );
 
     return { txHash, amountOut: expected };
   }

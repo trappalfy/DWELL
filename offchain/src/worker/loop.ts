@@ -1,7 +1,7 @@
 import { bucketOf, epochOf } from "../epoch.ts";
 
 export interface TickDeps {
-  closeBuckets(currentBucket: number): Promise<number>;
+  closeBuckets(currentBucket: number): Promise<unknown>;
   settleEpoch(epoch: number): Promise<unknown>;
   publishIfDue(): Promise<unknown>;
   checkPublishedRoot(): Promise<unknown>;

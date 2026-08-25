@@ -16,6 +16,7 @@ export class HeartbeatStore {
   readonly #forEpoch;
   readonly #pending;
   readonly #inBucket;
+  readonly #discard;
 
   constructor(db: DatabaseSync) {
     this.#accept = db.prepare(
@@ -34,6 +35,7 @@ export class HeartbeatStore {
     this.#inBucket = db.prepare(
       "SELECT account FROM heartbeats WHERE bucket_id = ? AND balance IS NULL"
     );
+    this.#discard = db.prepare("DELETE FROM heartbeats WHERE bucket_id = ? AND balance IS NULL");
   }
 
   /** Accounts still awaiting a balance read in this bucket. */
@@ -63,6 +65,20 @@ export class HeartbeatStore {
       bucketId: Number((row as Record<string, unknown>).bucket_id),
       balance: BigInt(String((row as Record<string, unknown>).balance))
     }));
+  }
+
+  /**
+   * Drops the unsampled rows of a bucket whose balances can no longer be
+   * read honestly, returning how many were removed.
+   *
+   * The only delete in the system, and it removes evidence that cannot be
+   * completed rather than evidence that counts: a row with no balance is a
+   * claim that someone was present, with nothing to weigh it by. Leaving it
+   * would keep the bucket in pendingBuckets forever, re-examined on every
+   * tick for the rest of the deployment.
+   */
+  discardBucket(bucketId: number): number {
+    return this.#discard.run(bucketId).changes as number;
   }
 
   pendingBuckets(beforeBucket: number): number[] {

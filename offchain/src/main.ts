@@ -58,7 +58,16 @@ const server = startServer(
 
 const worker = startWorker(
   {
-    closeBuckets: (currentBucket) => closeBuckets({ heartbeats, reader, currentBucket }),
+    closeBuckets: async (currentBucket) => {
+      const report = await closeBuckets({ heartbeats, reader, currentBucket });
+      // Worth waking someone for: buckets are dropped only when the worker
+      // fell far enough behind that their balances stopped being knowable,
+      // and the miners in them went unpaid for that time.
+      if (report.discarded > 0) {
+        alert(`dropped ${report.discarded} stale bucket(s): balances no longer knowable`);
+      }
+      return report;
+    },
     settleEpoch: (epoch) =>
       settleEpoch(
         {

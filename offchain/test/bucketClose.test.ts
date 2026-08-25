@@ -27,9 +27,9 @@ test("закрывает только бакеты, которые уже поз
   heartbeats.accept(A, 11);
 
   const reader = stubReader({ [A]: 5n });
-  const closed = await closeBuckets({ heartbeats, reader, currentBucket: 11 });
+  const result = await closeBuckets({ heartbeats, reader, currentBucket: 11 });
 
-  assert.equal(closed, 1, "текущий бакет ещё принимает хартбиты");
+  assert.equal(result.closed, 1, "текущий бакет ещё принимает хартбиты");
   assert.deepEqual(heartbeats.pendingBuckets(12), [11]);
 });
 
@@ -66,6 +66,48 @@ test("без незакрытых бакетов сеть не трогаетс�
   const heartbeats = new HeartbeatStore(db);
   const reader = stubReader({});
 
-  assert.equal(await closeBuckets({ heartbeats, reader, currentBucket: 5 }), 0);
+  assert.deepEqual(await closeBuckets({ heartbeats, reader, currentBucket: 5 }), {
+    closed: 0,
+    discarded: 0
+  });
   assert.equal(reader.calls.length, 0);
+});
+
+test("отставший бакет не заполняется сегодняшним балансом", async () => {
+  const db = openDatabase(":memory:");
+  const heartbeats = new HeartbeatStore(db);
+  // Бакет 900 отстал на 100 тактов — больше двух эпох.
+  heartbeats.accept(A, 900);
+
+  const reader = stubReader({ [A]: 5n });
+  const result = await closeBuckets({ heartbeats, reader, currentBucket: 1000 });
+
+  assert.equal(result.closed, 0, "заполнять его текущим балансом нельзя");
+  assert.equal(result.discarded, 1);
+  assert.equal(reader.calls.length, 0, "и спрашивать балансы незачем");
+});
+
+test("отставший бакет не остаётся в очереди навсегда", async () => {
+  const db = openDatabase(":memory:");
+  const heartbeats = new HeartbeatStore(db);
+  heartbeats.accept(A, 900);
+
+  const reader = stubReader({ [A]: 5n });
+  await closeBuckets({ heartbeats, reader, currentBucket: 1000 });
+
+  assert.deepEqual(heartbeats.pendingBuckets(1000), [], "иначе он всплывал бы каждый тик");
+  assert.deepEqual(heartbeats.listForEpoch(30), [], "и не даёт веса ни на грамм");
+});
+
+test("бакет, отставший в пределах допуска, всё ещё закрывается", async () => {
+  const db = openDatabase(":memory:");
+  const heartbeats = new HeartbeatStore(db);
+  // 50 тактов позади — меньше двух эпох, короткая заминка воркера.
+  heartbeats.accept(A, 950);
+
+  const reader = stubReader({ [A]: 5n });
+  const result = await closeBuckets({ heartbeats, reader, currentBucket: 1000 });
+
+  assert.equal(result.closed, 1, "короткая задержка не обязана стоить майнеру бакета");
+  assert.equal(result.discarded, 0);
 });

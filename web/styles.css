@@ -12,6 +12,24 @@
  * borrows the viewer's.
  */
 
+/* ------------------------------------------------------------------- base */
+
+/*
+ * The user-agent rule for [hidden] is display:none at specificity (0,1,0),
+ * which any class that sets a display of its own then beats. Two elements
+ * here are toggled from the script by the hidden attribute — the mined
+ * readout and the claim button — and both carry a class with a display, so
+ * without this they stayed on screen while the script believed them hidden.
+ * A visitor with no wallet read someone else is mining and was offered a
+ * claim button that could do nothing.
+ *
+ * !important is the exception this rule exists for: hiding must not be
+ * something a later declaration can quietly win back.
+ */
+[hidden] {
+  display: none !important;
+}
+
 /* ------------------------------------------------------------------ faces */
 
 /*

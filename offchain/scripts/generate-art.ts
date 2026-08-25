@@ -79,6 +79,12 @@ for (const slide of SLIDES) {
  * breaks the outline. web/art/favicon-16.png, favicon-32.png and
  * apple-touch-icon.png are therefore committed assets, like the hearth
  * scenes above.
+ *
+ * web/art/og-card.png is committed for the same reason. It is the link
+ * preview card: hearth-inside.webp cropped to 1200x630 with the wordmark and
+ * tagline set over it, composed in a browser so the two pixel faces render
+ * exactly as they do on the page. Redo it by hand if the copy or the domain
+ * changes; nothing here can draw it, because nothing here can lay out text.
  */
 for (const spec of FUEL) {
   const patterns = new Patterns();

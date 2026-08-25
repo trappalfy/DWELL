@@ -1,0 +1,42 @@
+# Секреты — в образ не попадают ни при каких условиях.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+keystore/
+secrets/
+
+# Ставится внутри образа из package-lock.json, а не копируется с машины:
+# локальное дерево может быть собрано под другую платформу.
+**/node_modules
+
+# Контрактная часть. В рантайме не нужна: процесс общается с уже
+# развёрнутым вольтом через ABI в коде.
+lib/
+out/
+cache/
+broadcast/
+src/
+test/
+script/
+foundry.toml
+
+# Базы: боевая живёт на томе, локальные в образе не нужны.
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+
+# Прочее, что только раздувает контекст сборки.
+.git/
+.github/
+docs/
+*.md
+!docs/RUNBOOK.md
+video.mp4
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

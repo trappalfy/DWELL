@@ -82,7 +82,7 @@ const worker = startWorker(
       }),
     checkPublishedRoot: () =>
       checkPublishedRoot({
-        entitlements,
+        roots,
         vaultAddress: config.rewardVault,
         reader,
         writer,

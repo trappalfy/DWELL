@@ -1,10 +1,9 @@
-import { buildTree } from "../tree.ts";
-import type { EntitlementStore } from "../db/entitlements.ts";
+import type { RootStore } from "../db/roots.ts";
 import type { Address } from "../types.ts";
 import type { Hex } from "viem";
 
 export interface WatchdogDeps {
-  readonly entitlements: EntitlementStore;
+  readonly roots: Pick<RootStore, "rootFor">;
   readonly vaultAddress: Address;
   readonly reader: {
     lastPublishedRoot(vault: Address): Promise<{ root: string; throughEpoch: number } | null>;
@@ -23,37 +22,47 @@ export type WatchdogVerdict =
     };
 
 /**
- * Compares the root the chain actually carries against the root our journal
- * produces.
+ * Compares the root the chain actually carries against the root we recorded
+ * sending for that same epoch.
  *
- * Recomputing the same pure function over the same data would always agree —
- * that comparison proves nothing. The value is in where the other side comes
- * from: the root is read from the chain's own event log. A mismatch means
- * the published root does not follow from our journal, which is exactly
- * three things, all serious:
+ * The value is in where the other side comes from: the chain's own event log,
+ * read back independently of anything this process remembers. A disagreement
+ * is one of two things, both serious:
  *
- *   1. somebody else used the keeper key;
- *   2. the journal diverged from what was settled (corruption, a race, a
- *      publish from stale memory);
- *   3. the worker sent something other than what it computed.
+ *   1. the chain carries a root for an epoch we never published — somebody
+ *      else used the keeper key;
+ *   2. the chain carries a different root for an epoch we did publish — the
+ *      worker sent something other than what it recorded.
  *
- * None of these is reachable by unit tests, which is why the check has to
- * exist at runtime.
+ * Comparison is per EPOCH, and that is the whole correction here. This used
+ * to rebuild a tree from the current journal and compare that. But the
+ * journal keeps growing between publishes — a root covers six epochs, and
+ * the five epochs after it legitimately allocate to more people — so the
+ * live journal disagrees with the last published root almost all of the
+ * time. The check fired within five minutes of the first root and paused the
+ * vault, which only the cold admin key can undo. A watchdog that cries every
+ * half hour is worse than none: it trains the operator to unpause without
+ * looking.
+ *
+ * What is given up is detecting a journal that diverged after the fact.
+ * Catching that needs entitlement history the database does not keep, and
+ * the previous code did not catch it either — it only looked as though it
+ * did, while reporting normal operation as an emergency.
  */
 export async function checkPublishedRoot(deps: WatchdogDeps): Promise<WatchdogVerdict> {
   const published = await deps.reader.lastPublishedRoot(deps.vaultAddress);
   if (published === null) return { ok: true, checked: 0 };
 
-  const cumulative = deps.entitlements.load();
-  const expected = buildTree(cumulative).root;
+  const ours = deps.roots.rootFor(published.throughEpoch);
 
-  if (expected.toLowerCase() === published.root.toLowerCase()) {
+  if (ours !== null && ours.root.toLowerCase() === published.root.toLowerCase()) {
     return { ok: true, checked: published.throughEpoch };
   }
 
+  const expected = ours?.root ?? "none recorded";
   deps.alert(
     `root mismatch through epoch ${published.throughEpoch}: ` +
-      `chain has ${published.root}, journal produces ${expected}`
+      `chain has ${published.root}, we recorded ${expected}`
   );
 
   // The pause is attempted immediately and its failure is surfaced rather

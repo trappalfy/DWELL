@@ -7,7 +7,7 @@ import { startFork, KEEPER_KEY, KEEPER_ADDRESS, type ForkHandle } from "./helper
 import { ChainWriter } from "../src/chain/writer.ts";
 import { ChainReader } from "../src/chain/reader.ts";
 import { openDatabase } from "../src/db/open.ts";
-import { EntitlementStore } from "../src/db/entitlements.ts";
+import { RootStore } from "../src/db/roots.ts";
 import { buildTree } from "../src/tree.ts";
 import { checkPublishedRoot } from "../src/worker/watchdog.ts";
 import { robinhoodChain } from "../src/chain/client.ts";
@@ -77,37 +77,40 @@ test("опубликованный корень читается обратно 
   assert.equal(seen.throughEpoch, 42);
 });
 
-test("watchdog молчит, когда цепочка согласна с журналом", async (t) => {
+test("watchdog молчит, когда цепочка согласна с записанным", async (t) => {
   if (!fork) return t.skip("anvil недоступен");
 
   const db = openDatabase(":memory:");
-  const entitlements = new EntitlementStore(db);
-  entitlements.save(new Map([[A, 3n], [B, 5n]]));
+  const roots = new RootStore(db);
+  // То же, что было отправлено выше: корень через эпоху 42.
+  const published = await reader.lastPublishedRoot(vault);
+  assert.ok(published, "корень обязан читаться из события");
+  roots.record(published.throughEpoch, published.root, "0x" + "11".repeat(32));
 
   const alerts: string[] = [];
   const verdict = await checkPublishedRoot({
-    entitlements,
+    roots,
     vaultAddress: vault,
     reader,
     writer,
     alert: (m) => alerts.push(m)
   });
 
-  assert.equal(verdict.ok, true, "журнал и цепочка совпадают");
+  assert.equal(verdict.ok, true, "цепочка несёт ровно то, что мы записали");
   assert.equal(alerts.length, 0);
 });
 
-test("watchdog ставит настоящую паузу, когда журнал разошёлся", async (t) => {
+test("watchdog ставит настоящую паузу на чужой корень", async (t) => {
   if (!fork) return t.skip("anvil недоступен");
 
   const db = openDatabase(":memory:");
-  const entitlements = new EntitlementStore(db);
-  // Не тот кумулятив, что опубликован — цепочка и журнал разойдутся.
-  entitlements.save(new Map([[A, 999n]]));
+  const roots = new RootStore(db);
+  // В нашей таблице этой эпохи нет вовсе: так выглядит публикация,
+  // сделанная чужими руками с нашим ключом.
 
   const alerts: string[] = [];
   const verdict = await checkPublishedRoot({
-    entitlements,
+    roots,
     vaultAddress: vault,
     reader,
     writer,

@@ -1,34 +1,36 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { openDatabase } from "../src/db/open.ts";
-import { EntitlementStore } from "../src/db/entitlements.ts";
-import { buildTree } from "../src/tree.ts";
+import { RootStore } from "../src/db/roots.ts";
 import { checkPublishedRoot } from "../src/worker/watchdog.ts";
 import type { Address } from "../src/types.ts";
 
-const A = "0xaaaa000000000000000000000000000000000001" as Address;
 const VAULT = "0xeeee000000000000000000000000000000000003" as Address;
-const FAKE_ROOT = "0x" + "cd".repeat(32);
+const OUR_ROOT = "0x" + "ab".repeat(32);
+const STRANGER_ROOT = "0x" + "cd".repeat(32);
+const EPOCH = 105;
 
-function fixture(onChainRoot: string | null) {
+interface OnChain {
+  readonly root: string;
+  readonly throughEpoch: number;
+}
+
+function fixture(onChain: OnChain | null, recorded: { epoch: number; root: string } | null) {
   const db = openDatabase(":memory:");
-  const entitlements = new EntitlementStore(db);
-  entitlements.save(new Map([[A, 500n]]));
+  const roots = new RootStore(db);
+  if (recorded) roots.record(recorded.epoch, recorded.root, "0x" + "11".repeat(32));
 
   const paused: Address[] = [];
   const alerts: string[] = [];
 
   return {
-    entitlements,
+    roots,
     paused,
     alerts,
     deps: {
-      entitlements,
+      roots,
       vaultAddress: VAULT,
-      reader: {
-        lastPublishedRoot: async () =>
-          onChainRoot === null ? null : { root: onChainRoot, throughEpoch: 105 }
-      },
+      reader: { lastPublishedRoot: async () => onChain },
       writer: {
         pause: async (vault: Address) => {
           paused.push(vault);
@@ -40,9 +42,11 @@ function fixture(onChainRoot: string | null) {
   };
 }
 
-test("совпадающий корень не вызывает тревоги", async () => {
-  const expected = buildTree(new Map([[A, 500n]])).root;
-  const { deps, paused, alerts } = fixture(expected);
+test("корень в цепочке совпадает с записанным — тревоги нет", async () => {
+  const { deps, paused, alerts } = fixture(
+    { root: OUR_ROOT, throughEpoch: EPOCH },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
 
   const verdict = await checkPublishedRoot(deps);
 
@@ -51,32 +55,70 @@ test("совпадающий корень не вызывает тревоги",
   assert.equal(alerts.length, 0);
 });
 
-test("расхождение немедленно ставит паузу", async () => {
-  const { deps, paused, alerts } = fixture(FAKE_ROOT);
+test("рост журнала между публикациями тревоги не вызывает", async () => {
+  // Это ровно тот случай, на котором прежняя проверка останавливала
+  // протокол: корень опубликован через эпоху 105, дальше эпохи 106-110
+  // начисляют новым людям, и журнал законно расходится с цепочкой.
+  // Публикация следующего корня наступит только после шести эпох.
+  const { deps, paused, alerts } = fixture(
+    { root: OUR_ROOT, throughEpoch: EPOCH },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
 
-  const verdict = await checkPublishedRoot(deps);
+  for (let i = 0; i < 30; i++) {
+    const verdict = await checkPublishedRoot(deps);
+    assert.equal(verdict.ok, true, `тик ${i} обязан быть спокойным`);
+  }
 
-  // assert.ok narrows the union; the mismatch branch owns `paused`.
-  assert.ok(!verdict.ok, "расхождение обязано быть замечено");
-  assert.equal(verdict.paused, true);
-  assert.deepEqual(paused, [VAULT], "вольт обязан быть остановлен");
-  assert.equal(alerts.length, 1);
-  assert.match(alerts[0]!, /mismatch/i);
+  assert.equal(paused.length, 0, "полчаса между корнями — не повод для паузы");
+  assert.equal(alerts.length, 0);
 });
 
-test("отчёт называет оба корня", async () => {
-  const expected = buildTree(new Map([[A, 500n]])).root;
-  const { deps } = fixture(FAKE_ROOT);
+test("чужой корень за эпоху, которой мы не публиковали, ставит паузу", async () => {
+  // Ключом кипера воспользовался кто-то другой: в цепочке есть корень,
+  // которого нет в нашей таблице.
+  const { deps, paused, alerts } = fixture(
+    { root: STRANGER_ROOT, throughEpoch: 111 },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
 
   const verdict = await checkPublishedRoot(deps);
 
   assert.ok(!verdict.ok);
-  assert.equal(verdict.actual, FAKE_ROOT);
-  assert.equal(verdict.expected, expected);
+  assert.equal(verdict.paused, true);
+  assert.deepEqual(paused, [VAULT]);
+  assert.match(alerts[0]!, /111/, "тревога обязана назвать эпоху");
+});
+
+test("другой корень за нашу эпоху ставит паузу", async () => {
+  // Отправлено не то, что посчитано.
+  const { deps, paused } = fixture(
+    { root: STRANGER_ROOT, throughEpoch: EPOCH },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
+
+  const verdict = await checkPublishedRoot(deps);
+
+  assert.ok(!verdict.ok);
+  assert.equal(verdict.expected, OUR_ROOT);
+  assert.equal(verdict.actual, STRANGER_ROOT);
+  assert.deepEqual(paused, [VAULT]);
+});
+
+test("сравнение не зависит от регистра шестнадцатеричной записи", async () => {
+  const { deps, paused } = fixture(
+    { root: OUR_ROOT.toUpperCase().replace("0X", "0x"), throughEpoch: EPOCH },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
+
+  const verdict = await checkPublishedRoot(deps);
+
+  assert.equal(verdict.ok, true);
+  assert.equal(paused.length, 0);
 });
 
 test("без опубликованных корней проверять нечего", async () => {
-  const { deps, paused } = fixture(null);
+  const { deps, paused } = fixture(null, null);
 
   const verdict = await checkPublishedRoot(deps);
 
@@ -85,7 +127,10 @@ test("без опубликованных корней проверять неч
 });
 
 test("провал паузы не глотается молча", async () => {
-  const { deps, alerts } = fixture(FAKE_ROOT);
+  const { deps, alerts } = fixture(
+    { root: STRANGER_ROOT, throughEpoch: EPOCH },
+    { epoch: EPOCH, root: OUR_ROOT }
+  );
   const failing = {
     ...deps,
     writer: {

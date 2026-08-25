@@ -50,6 +50,7 @@ const server = startServer(
     minBalance: config.minBalance,
     vaultAddress: config.rewardVault,
     projectToken: config.projectToken,
+    dryRun: config.dryRun,
     now: () => Date.now()
   },
   config.port,

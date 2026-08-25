@@ -26,6 +26,8 @@ interface BootOptions {
   }>;
   /** Router settings, so a test can stand the server behind a proxy. */
   readonly router?: { readonly trustedProxyHops?: number };
+  /** Rehearsal mode: nothing is published and the token address is withheld. */
+  readonly dryRun?: boolean;
 }
 
 // Port 0 asks the OS for a free port, but the assignment is only readable
@@ -57,6 +59,7 @@ async function boot(balance: bigint, options: BootOptions = {}) {
       minBalance: MIN,
       vaultAddress: VAULT,
       projectToken: PROJECT_TOKEN,
+      dryRun: options.dryRun ?? false,
       now: () => Date.now()
     },
     0,
@@ -357,4 +360,17 @@ test("без доверенных прокси заголовок не даёт 
   }
 
   assert.equal(statuses[5], 429, "подделка заголовка не обязана открывать шестой запрос");
+});
+
+test("в режиме репетиции адрес токена не публикуется", async (t) => {
+  // DRY_RUN означает, что протокол не запущен, а PROJECT_TOKEN в это время
+  // обычно подставной. Показать его как $DWELL — значит указать читателю
+  // на чужой контракт; на этой цепочке это стоит денег.
+  const { server, base } = await boot(MIN, { dryRun: true });
+  t.after(() => server.close());
+
+  const body = (await (await fetch(`${base}/v1/config`)).json()) as JsonBody;
+
+  assert.equal(body.projectToken, null, "страница обязана сказать, что токена ещё нет");
+  assert.equal(body.vault, VAULT, "остальное отдаётся как обычно");
 });

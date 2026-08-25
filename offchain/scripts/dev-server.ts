@@ -70,6 +70,8 @@ const server = startServer(
     minBalance,
     vaultAddress: VAULT,
     projectToken: PROJECT_TOKEN,
+    // Здесь цепочки нет вовсе — это репетиция по определению.
+    dryRun: true,
     now: () => Date.now()
   },
   port,

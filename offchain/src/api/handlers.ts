@@ -36,6 +36,15 @@ export interface HandlerDeps {
    * protocol cannot run without.
    */
   readonly projectToken: Address | null;
+  /**
+   * Rehearsal mode. The token address is withheld while this is on, because
+   * a dry run means the protocol is not live and PROJECT_TOKEN is usually a
+   * stand-in — the process refuses to start without one, so a rehearsal has
+   * to name some existing contract. Printing that under the $DWELL label
+   * would point readers at somebody else's token, and this chain carries
+   * impostors under our own name. Nothing else in the response changes.
+   */
+  readonly dryRun: boolean;
   readonly now: () => number;
 }
 
@@ -205,7 +214,7 @@ export function createHandlers(deps: HandlerDeps): Routes {
       status: 200,
       body: {
         vault: deps.vaultAddress,
-        projectToken: deps.projectToken,
+        projectToken: deps.dryRun ? null : deps.projectToken,
         rewardToken: ADDRESSES.tsla,
         minBalance: deps.minBalance.toString(),
         epochSeconds: EPOCH_SECONDS,

@@ -36,6 +36,7 @@ async function boot() {
       minBalance: 1n,
       vaultAddress: "0xeeee000000000000000000000000000000000003" as Address,
       projectToken: "0xdddd000000000000000000000000000000000004" as Address,
+      dryRun: false,
       now: () => Date.now()
     },
     0,

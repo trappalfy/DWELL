@@ -43,8 +43,11 @@ test("релиз никогда не превышает свободный ре�
   for (const reserve of [1n, 7n, 10n ** 6n, 10n ** 24n]) {
     const v = vault(reserve, 0n, 0n);
     // Обязано держаться в обоих режимах: и внутри окна запуска, и после него.
-    for (const mined of [0, 1, LAUNCH_WINDOW_EPOCHS - 1, AFTER_WINDOW]) {
-      assert.ok(computeRelease(v, SOME_WEIGHT, mined) <= unallocated(v), `mined=${mined}`);
+    for (const released of [0, 1, LAUNCH_WINDOW_EPOCHS - 1, AFTER_WINDOW]) {
+      assert.ok(
+        computeRelease(v, SOME_WEIGHT, released) <= unallocated(v),
+        `released=${released}`
+      );
     }
   }
 });
@@ -81,8 +84,8 @@ test("в окне запуска эпоха отдаёт равную долю �
 test("окно запуска раздаёт банк целиком, без хвоста", () => {
   let free = BANK;
   let released = 0n;
-  for (let mined = 0; mined < LAUNCH_WINDOW_EPOCHS; mined++) {
-    const release = computeRelease(vault(free, 0n, 0n), SOME_WEIGHT, mined);
+  for (let done = 0; done < LAUNCH_WINDOW_EPOCHS; done++) {
+    const release = computeRelease(vault(free, 0n, 0n), SOME_WEIGHT, done);
     free -= release;
     released += release;
   }

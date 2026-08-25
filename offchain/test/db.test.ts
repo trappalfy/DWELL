@@ -134,13 +134,14 @@ test("недоступный путь к базе называет сам пут
   );
 });
 
-test("countMined считает только эпохи, в которых кто-то майнил", () => {
+test("countReleasing считает только эпохи, в которых что-то раздали", () => {
   const { epochs } = fresh();
 
-  epochs.markSettled(5_955_209, 1_000n, 42n);
+  epochs.markSettled(5_955_209, 1_000n, 42n); // майнили и раздали
   epochs.markSettled(5_955_210, 0n, 0n); // никого не было
-  epochs.markSettled(5_955_211, 500n, 21n);
+  epochs.markSettled(5_955_211, 700n, 0n); // майнили, но вольт пуст
+  epochs.markSettled(5_955_212, 500n, 21n); // майнили и раздали
 
-  assert.equal(epochs.countSettledAfter(null), 3, "закрыты все три эпохи");
-  assert.equal(epochs.countMined(), 2, "пустая эпоха окно запуска не расходует");
+  assert.equal(epochs.countSettledAfter(null), 4, "закрыты все четыре эпохи");
+  assert.equal(epochs.countReleasing(), 2, "окно расходует только настоящая выплата");
 });

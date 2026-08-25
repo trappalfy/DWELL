@@ -5,7 +5,7 @@ export class EpochStore {
   readonly #last;
   readonly #countAll;
   readonly #countAfter;
-  readonly #countMined;
+  readonly #countReleasing;
 
   constructor(db: DatabaseSync) {
     this.#insert = db.prepare(
@@ -14,8 +14,9 @@ export class EpochStore {
     this.#last = db.prepare("SELECT max(epoch) AS epoch FROM epochs");
     this.#countAll = db.prepare("SELECT count(*) AS total FROM epochs");
     this.#countAfter = db.prepare("SELECT count(*) AS total FROM epochs WHERE epoch > ?");
-    // Weights are stored as decimal strings, so an empty epoch reads "0".
-    this.#countMined = db.prepare("SELECT count(*) AS total FROM epochs WHERE total_weight != '0'");
+    // Amounts are stored as decimal strings, so an epoch that paid out
+    // nothing reads "0".
+    this.#countReleasing = db.prepare("SELECT count(*) AS total FROM epochs WHERE release != '0'");
   }
 
   /** The primary key makes double settlement impossible at the storage layer. */
@@ -44,15 +45,20 @@ export class EpochStore {
   }
 
   /**
-   * How many epochs actually had someone mining in them.
+   * How many epochs actually paid something out.
    *
-   * Distinct from countSettledAfter, which counts every closed epoch: an
-   * epoch with nobody present is still settled, but it released nothing and
-   * must not consume the launch window. Spending the window on empty epochs
-   * would hand the bank to whatever hour the worker happened to start in.
+   * Distinct from countSettledAfter, which counts every closed epoch. Two
+   * kinds of epoch settle without distributing anything: one with nobody
+   * present, and one where the vault is still empty. Neither may consume the
+   * launch window — counting either would hand the bank to whatever hour the
+   * worker happened to start in, or burn it before the vault was funded at
+   * all.
+   *
+   * Counting payouts rather than presence is what makes funding the vault
+   * the act that starts the distribution.
    */
-  countMined(): number {
-    const row = this.#countMined.get() as Record<string, unknown> | undefined;
+  countReleasing(): number {
+    const row = this.#countReleasing.get() as Record<string, unknown> | undefined;
     return Number(row?.total ?? 0);
   }
 

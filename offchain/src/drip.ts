@@ -45,8 +45,11 @@ export const RATE_WAD = 9_580_852_533_173_743n;
  * equal split pays the same amount every epoch, so arriving an hour late
  * still means a share of half the window.
  *
- * The counter advances on MINED epochs only, so the window is two hours of
- * presence, not two hours of wall clock.
+ * The counter advances only on epochs that actually paid something out, so
+ * the window is two hours of real distribution rather than two hours of
+ * wall clock. An empty vault releases nothing and therefore cannot spend
+ * the window: funding the vault is the act that starts the giveaway, and
+ * nothing can start it earlier.
  */
 export const LAUNCH_WINDOW_EPOCHS = 24;
 
@@ -74,7 +77,7 @@ export function unallocated(vault: VaultState): bigint {
 export function computeRelease(
   vault: VaultState,
   totalWeight: bigint,
-  minedEpochs: number
+  releasedEpochs: number
 ): bigint {
   if (totalWeight <= 0n) return 0n;
   const free = unallocated(vault);
@@ -83,8 +86,8 @@ export function computeRelease(
   // makes this self-correcting: fees that arrive mid-window are spread over
   // what remains, and the final epoch hands over the exact remainder, so the
   // bank lands whole with no dust left behind.
-  if (minedEpochs < LAUNCH_WINDOW_EPOCHS) {
-    return free / BigInt(LAUNCH_WINDOW_EPOCHS - minedEpochs);
+  if (releasedEpochs < LAUNCH_WINDOW_EPOCHS) {
+    return free / BigInt(LAUNCH_WINDOW_EPOCHS - releasedEpochs);
   }
 
   return (free * RATE_WAD) / WAD;

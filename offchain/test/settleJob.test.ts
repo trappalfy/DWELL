@@ -128,3 +128,39 @@ test("пустые эпохи не расходуют окно запуска", 
 
   assert.equal(result.release, bank / 24n, "доля та же, что была бы в первой эпохе");
 });
+
+
+test("майнинг при пустом вольте окно запуска не расходует", async () => {
+  const bank = 86_400_000_000_000_000n;
+  const db = openDatabase(":memory:");
+  const heartbeats = new HeartbeatStore(db);
+  const entitlements = new EntitlementStore(db);
+  const epochs = new EpochStore(db);
+
+  const vault = { balance: 0n, totalAllocated: 0n, totalClaimed: 0n };
+  const deps = {
+    heartbeats,
+    entitlements,
+    epochs,
+    reader: { vaultState: async () => vault },
+    vaultAddress: VAULT,
+    minBalance: MIN
+  };
+
+  // Пять эпох люди держат вкладку, но вольт ещё не заряжен.
+  for (let epoch = 3; epoch < 8; epoch++) {
+    heartbeats.accept(A, epoch * 30);
+    heartbeats.fillBucket(epoch * 30, 1, new Map([[A, 300n]]));
+    const dry = await settleEpoch(deps, epoch);
+    assert.equal(dry.release, 0n, "пустой вольт ничего не раздаёт");
+  }
+  assert.equal(entitlements.load().size, 0, "и ничего никому не начисляет");
+
+  // Вольт заряжают — раздача обязана начаться с первой доли, а не с середины.
+  vault.balance = bank;
+  heartbeats.accept(A, 8 * 30);
+  heartbeats.fillBucket(8 * 30, 1, new Map([[A, 300n]]));
+  const first = await settleEpoch(deps, 8);
+
+  assert.equal(first.release, bank / 24n, "окно открывается заливкой вольта");
+});

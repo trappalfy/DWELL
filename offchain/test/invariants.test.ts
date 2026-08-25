@@ -48,7 +48,7 @@ test("свойства сохраняются на 400 случайных эпо
     let cumulative = new Map<Address, bigint>();
     let purchasedTotal = vault.balance;
     let previousTotalAllocated = 0n;
-    let minedEpochs = 0;
+    let releasedEpochs = 0;
 
     for (let epoch = 1; epoch <= 100; epoch++) {
       const result = settle({
@@ -59,9 +59,9 @@ test("свойства сохраняются на 400 случайных эпо
         priorCumulative: cumulative,
         // Растёт вместе с прогоном, поэтому сотня эпох проходит и через
         // окно запуска, и через режим полураспада за ним.
-        minedEpochs
+        releasedEpochs
       });
-      if (result.totalWeight > 0n) minedEpochs++;
+      if (result.release > 0n) releasedEpochs++;
 
       // 1. Ничего не создаётся и не теряется в пределах эпохи
       let distributed = 0n;
@@ -122,7 +122,7 @@ test("детерминизм: одинаковый вход даёт одина�
     vault: { balance: 1_000n * 10n ** 18n, totalAllocated: 0n, totalClaimed: 0n },
     minBalance: MIN,
     priorCumulative: new Map<Address, bigint>(),
-    minedEpochs: 0
+    releasedEpochs: 0
   };
 
   const first = settle(args);

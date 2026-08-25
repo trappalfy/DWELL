@@ -22,7 +22,7 @@ function input(overrides: Partial<SettlementInput> = {}): SettlementInput {
     minBalance: MIN,
     priorCumulative: new Map<Address, bigint>(),
     // По умолчанию окно запуска позади: эти тесты про установившийся режим.
-    minedEpochs: LAUNCH_WINDOW_EPOCHS,
+    releasedEpochs: LAUNCH_WINDOW_EPOCHS,
     ...overrides
   };
 }

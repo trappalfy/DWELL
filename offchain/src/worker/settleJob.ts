@@ -41,7 +41,7 @@ export async function settleEpoch(
     priorCumulative,
     // Read before this epoch is marked settled, so the count is of epochs
     // that came before rather than including the one being settled now.
-    minedEpochs: deps.epochs.countMined()
+    releasedEpochs: deps.epochs.countReleasing()
   });
 
   deps.epochs.markSettled(epoch, result.totalWeight, result.release);

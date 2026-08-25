@@ -18,7 +18,7 @@ export function settle(input: SettlementInput): SettlementResult {
   const weights = computeWeights(input.heartbeats, input.minBalance);
   const totalWeight = sumWeights(weights);
 
-  const release = computeRelease(input.vault, totalWeight, input.minedEpochs);
+  const release = computeRelease(input.vault, totalWeight, input.releasedEpochs);
   const { allocations, dust } = allocate(release, weights);
   const cumulative = accumulate(input.priorCumulative, allocations);
 

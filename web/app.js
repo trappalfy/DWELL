@@ -424,9 +424,20 @@ async function start() {
 
   // The background depends on config, so it is fetched before either painter
   // starts — and a failed fetch must still leave a sky behind the page.
+  //
+  // A failure here is not fatal and must not be reported as one. Two real
+  // cases reach it: the page served as plain files with no API behind it,
+  // which is how it is previewed before the protocol is deployed, and an API
+  // that is briefly down in production. In both the page is still worth
+  // reading — every section below the fold is static — so it keeps the copy
+  // written into the markup instead of replacing the headline with a fetch
+  // error. Anything that needs the server states its own absence: the token
+  // address stays "Not published yet", the clock stays unset.
   try {
     state.config = await api("/v1/config");
     renderConfig();
+  } catch {
+    /* no config: the page stands on its own markup */
   } finally {
     paintBackground();
   }

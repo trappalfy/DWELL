@@ -1,3 +1,4 @@
+import { createStageAlerter } from "./stageAlerter.ts";
 import { bucketOf, epochOf } from "../epoch.ts";
 
 export interface TickDeps {
@@ -7,7 +8,6 @@ export interface TickDeps {
   checkPublishedRoot(): Promise<unknown>;
   checkFeeEscrow(): Promise<unknown>;
   lastSettledEpoch(): number | null;
-  alert(message: string): void;
 }
 
 export interface TickReport {
@@ -30,8 +30,9 @@ export interface TickReport {
  *     decides whether to say the fees are worth a trip.
  *
  * Each stage is isolated. One failing stage must not cancel the others, or a
- * flaky RPC during publishing would also stop fee conversion and, worse, the
- * watchdog. Failures are collected and alerted, never swallowed.
+ * flaky RPC during publishing would also stop the watchdog. Failures are
+ * collected and returned, never swallowed — deciding which of them is worth
+ * waking someone for belongs to the caller, which can see across ticks.
  */
 export async function runWorkerTick(deps: TickDeps, nowSeconds: number): Promise<TickReport> {
   const settled: number[] = [];
@@ -43,7 +44,6 @@ export async function runWorkerTick(deps: TickDeps, nowSeconds: number): Promise
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       failures.push(`${name}: ${message}`);
-      deps.alert(`worker stage ${name} failed: ${message}`);
     }
   };
 
@@ -76,14 +76,20 @@ export interface WorkerHandle {
  * Runs a tick every interval, never overlapping: a slow tick delays the next
  * one rather than running two settlements concurrently over one journal.
  */
-export function startWorker(deps: TickDeps, intervalMs: number): WorkerHandle {
+export function startWorker(
+  deps: TickDeps,
+  intervalMs: number,
+  alert: (message: string) => void
+): WorkerHandle {
+  const reportStages = createStageAlerter(alert);
   let stopped = false;
   let timer: NodeJS.Timeout | null = null;
 
   const schedule = (): void => {
     if (stopped) return;
     timer = setTimeout(async () => {
-      await runWorkerTick(deps, Math.floor(Date.now() / 1_000));
+      const report = await runWorkerTick(deps, Math.floor(Date.now() / 1_000));
+      reportStages(report.failures);
       schedule();
     }, intervalMs);
   };

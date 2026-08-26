@@ -113,10 +113,10 @@ const worker = startWorker(
         alert
       }),
     checkFeeEscrow,
-    lastSettledEpoch: () => epochs.lastSettled(),
-    alert
+    lastSettledEpoch: () => epochs.lastSettled()
   },
-  10_000
+  10_000,
+  alert
 );
 
 // The key is never printed; the derived address is public and is what an

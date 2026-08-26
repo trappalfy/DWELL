@@ -35,7 +35,6 @@ function fixture(overrides: Partial<TickDeps> = {}) {
         return { claimable: 0n, claimableNative: 0n, alerted: false };
       },
       lastSettledEpoch: () => CURRENT_EPOCH - 2,
-      alert: () => {},
       ...overrides
     } satisfies TickDeps
   };
@@ -76,21 +75,17 @@ test("watchdog идёт после публикации", async () => {
 });
 
 test("падение одной стадии не отменяет остальные", async () => {
-  const alerts: string[] = [];
   const { deps, calls } = fixture({
     publishIfDue: async () => {
       throw new Error("rpc down");
     }
   });
 
-  const report = await runWorkerTick(
-    { ...deps, alert: (m: string) => alerts.push(m) },
-    NOW_SECONDS
-  );
+  const report = await runWorkerTick(deps, NOW_SECONDS);
 
   assert.ok(calls.includes("fees"), "проверка комиссий обязана идти даже после провала публикации");
   assert.equal(report.failures.length, 1);
-  assert.match(alerts[0]!, /rpc down/);
+  assert.match(report.failures[0]!, /^publish: .*rpc down/, "стадия обязана быть названа в отчёте");
 });
 
 test("нечего догонять — эпохи не считаются", async () => {

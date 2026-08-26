@@ -34,14 +34,6 @@ CREATE TABLE IF NOT EXISTS roots (
   tx_hash       TEXT,
   published_at  INTEGER
 );
-
-CREATE TABLE IF NOT EXISTS purchases (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  eth_in    TEXT    NOT NULL,
-  tsla_out  TEXT    NOT NULL,
-  tx_hash   TEXT    NOT NULL,
-  bought_at INTEGER NOT NULL
-);
 `;
 
 export function openDatabase(path: string): DatabaseSync {

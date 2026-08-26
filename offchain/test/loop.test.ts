@@ -30,13 +30,9 @@ function fixture(overrides: Partial<TickDeps> = {}) {
         calls.push("watchdog");
         return { ok: true, checked: 0 };
       },
-      claimFeesIfDue: async () => {
-        calls.push("claim");
-        return { claimed: false, reason: "x" };
-      },
-      convertFeesIfDue: async () => {
-        calls.push("convert");
-        return { converted: false, reason: "x" };
+      checkFeeEscrow: async () => {
+        calls.push("fees");
+        return { claimable: 0n, claimableNative: 0n, alerted: false };
       },
       lastSettledEpoch: () => CURRENT_EPOCH - 2,
       alert: () => {},
@@ -92,7 +88,7 @@ test("падение одной стадии не отменяет осталь�
     NOW_SECONDS
   );
 
-  assert.ok(calls.includes("convert"), "конвертация обязана идти даже после провала публикации");
+  assert.ok(calls.includes("fees"), "проверка комиссий обязана идти даже после провала публикации");
   assert.equal(report.failures.length, 1);
   assert.match(alerts[0]!, /rpc down/);
 });
@@ -103,29 +99,23 @@ test("нечего догонять — эпохи не считаются", asy
   assert.equal(calls.filter((c) => c.startsWith("settle:")).length, 0);
 });
 
-test("комиссии сначала забираются, и только потом конвертируются", async () => {
+test("состояние хранилища комиссий проверяется каждый тик", async () => {
   const { deps, calls } = fixture();
 
   await runWorkerTick(deps, NOW_SECONDS);
 
-  const claim = calls.indexOf("claim");
-  const convert = calls.indexOf("convert");
-  assert.ok(claim >= 0, "сбор комиссий обязан происходить каждый тик");
-  assert.ok(
-    claim < convert,
-    "иначе развёрнутый ETH пролежал бы до следующего тика вместо того, чтобы уехать в вольт"
-  );
+  assert.ok(calls.includes("fees"), "иначе накопившееся будет лежать незамеченным");
 });
 
-test("провал сбора комиссий не отменяет конвертацию", async () => {
+test("провал проверки комиссий не отменяет остальной тик", async () => {
   const { deps, calls } = fixture({
-    claimFeesIfDue: async () => {
-      throw new Error("локер недоступен");
+    checkFeeEscrow: async () => {
+      throw new Error("узел недоступен");
     }
   });
 
   const report = await runWorkerTick(deps, NOW_SECONDS);
 
-  assert.ok(report.failures.some((f) => f.includes("claim")), "провал обязан попасть в отчёт");
-  assert.ok(calls.includes("convert"), "остаток на кипере всё ещё можно обменять");
+  assert.ok(report.failures.some((x) => x.includes("fees")), "провал обязан попасть в отчёт");
+  assert.ok(calls.includes("watchdog"), "сторож важнее и обязан отработать в любом случае");
 });

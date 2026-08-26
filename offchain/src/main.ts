@@ -1,18 +1,16 @@
-import { loadWorkerConfig } from "./config.ts";
+import { ADDRESSES, loadWorkerConfig } from "./config.ts";
 import { openDatabase } from "./db/open.ts";
 import { HeartbeatStore } from "./db/heartbeats.ts";
 import { EntitlementStore } from "./db/entitlements.ts";
 import { EpochStore } from "./db/epochs.ts";
 import { RootStore } from "./db/roots.ts";
-import { PurchaseStore } from "./db/purchases.ts";
 import { ChainReader } from "./chain/reader.ts";
 import { ChainWriter } from "./chain/writer.ts";
 import { closeBuckets } from "./ingest/bucketClose.ts";
 import { settleEpoch } from "./worker/settleJob.ts";
 import { publishIfDue } from "./worker/publisher.ts";
 import { checkPublishedRoot } from "./worker/watchdog.ts";
-import { convertFeesIfDue } from "./worker/feeConverter.ts";
-import { claimFeesIfDue } from "./worker/feeClaim.ts";
+import { createFeeWatch } from "./worker/feeWatch.ts";
 import { startWorker } from "./worker/loop.ts";
 import { startServer } from "./server.ts";
 import { findBackdrop } from "./backdrop.ts";
@@ -26,7 +24,6 @@ const heartbeats = new HeartbeatStore(db);
 const entitlements = new EntitlementStore(db);
 const epochs = new EpochStore(db);
 const roots = new RootStore(db);
-const purchases = new PurchaseStore(db);
 
 const reader = new ChainReader(config.rpcUrl, config.projectToken);
 const writer = new ChainWriter(config.rpcUrl, config.keeperKey);
@@ -39,6 +36,22 @@ const alert = (message: string): void => {
 
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "web");
 const backdrop = findBackdrop(webRoot);
+
+/*
+ * Built once, not per tick: the watch remembers whether it has already
+ * spoken, which is the only thing keeping a ten-second loop from turning an
+ * alert into a log nobody reads.
+ */
+const checkFeeEscrow = createFeeWatch({
+  recipient: config.feeRecipient,
+  rewardToken: ADDRESSES.tsla,
+  threshold: config.feeAlertThreshold,
+  escrow: {
+    creditedToken: (recipient, token) => reader.escrowCredit(recipient, token),
+    creditedNative: (recipient) => reader.escrowCreditNative(recipient)
+  },
+  alert
+});
 
 const server = startServer(
   {
@@ -99,22 +112,7 @@ const worker = startWorker(
         writer,
         alert
       }),
-    claimFeesIfDue: () =>
-      claimFeesIfDue({
-        projectToken: config.projectToken,
-        reader,
-        writer,
-        dryRun: config.dryRun
-      }),
-    convertFeesIfDue: () =>
-      convertFeesIfDue({
-        purchases,
-        vaultAddress: config.rewardVault,
-        threshold: config.conversionThreshold,
-        reader,
-        writer,
-        dryRun: config.dryRun
-      }),
+    checkFeeEscrow,
     lastSettledEpoch: () => epochs.lastSettled(),
     alert
   },

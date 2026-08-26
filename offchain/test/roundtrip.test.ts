@@ -57,11 +57,47 @@ before(async () => {
   reader = new ChainReader(fork.rpcUrl, ADDRESSES.tsla);
 
   // Fund the vault with real TSLA so the solvency check inside publishRoot
-  // can pass; the swap is the same one the fee converter will use.
-  await writer.swapEthForReward(vault, 10n ** 16n);
+  // can pass. Taken straight from a holder rather than bought through the
+  // router: this is test setup, and setup should not depend on pool depth,
+  // slippage or a swap path that production no longer uses.
+  await fundVaultWithTsla(fork.rpcUrl, vault, 10n ** 16n);
 });
 
 after(() => fork?.stop());
+
+/**
+ * Moves real TSLA onto the fork by impersonating an address that holds it.
+ *
+ * The WETH/TSLA pool is used as the source because it is guaranteed to be
+ * solvent in that asset for as long as the pool exists — a whale address
+ * could be drained or could move on, and the test would start failing for a
+ * reason that has nothing to do with the code under test.
+ */
+async function fundVaultWithTsla(
+  rpcUrl: string,
+  recipient: Address,
+  amount: bigint
+): Promise<void> {
+  const rpc = async (method: string, params: unknown[]): Promise<void> => {
+    await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+    });
+  };
+
+  const source = ADDRESSES.wethTslaPool;
+  await rpc("anvil_impersonateAccount", [source]);
+  await rpc("anvil_setBalance", [source, "0xde0b6b3a7640000"]);
+
+  // transfer(address,uint256)
+  const data =
+    "0xa9059cbb" +
+    recipient.slice(2).toLowerCase().padStart(64, "0") +
+    amount.toString(16).padStart(64, "0");
+  await rpc("eth_sendTransaction", [{ from: source, to: ADDRESSES.tsla, data }]);
+  await rpc("anvil_stopImpersonatingAccount", [source]);
+}
 
 test("опубликованный корень читается обратно из события", async (t) => {
   if (!fork) return t.skip("anvil недоступен");

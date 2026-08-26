@@ -11,6 +11,11 @@ primary_region = "iad"
   RPC_URL = "https://rpc.mainnet.chain.robinhood.com"
   REWARD_VAULT = "0xEF84bAD4bBAdE5BECAe138Dd7c0CAA9dB6C77079"
   MIN_BALANCE = "100000"
+
+  # Кому pons начисляет creator fees. Холодный ключ: забрать из хранилища
+  # может только сам получатель, поэтому воркер видит начисление, но не
+  # может его тронуть — это и есть смысл выбора.
+  FEE_RECIPIENT = "0xef048611d7F3077b35Fab260565886186fDa32bA"
   DATABASE_PATH = "/data/dwell.db"
 
   # Один прокси Fly перед процессом. Без этого лимит на выдачу челленджа

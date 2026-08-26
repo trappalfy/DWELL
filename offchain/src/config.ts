@@ -22,22 +22,15 @@ export const ADDRESSES = {
   wethTslaPool: "0xA953CA88ff430e9487c60cA34d757414f4efdA07",
   multicall3: "0xcA11bde05977b3631167028862bE2a173976CA11",
   /*
-   * PonsLaunchLocker: holds our pool position and pays out creator fees.
-   * Verified against the chain, not the docs — its factory() returns the
-   * address pons documents as the active factory, and impostor contracts
-   * carrying the same name exist here.
+   * pons V2. The launchpad's V1 factory is closed — every launchToken call
+   * to it now reverts — and V2 keeps creator fees in an escrow instead of a
+   * liquidity position. Both addresses are asserted against the chain in
+   * reader.test.ts rather than trusted from documentation: contracts wearing
+   * these names by imposture exist here in numbers.
    */
-  ponsLocker: "0x736D76699C26D0d966744cAe304C000d471f7F35"
+  ponsV2Factory: "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e",
+  ponsFeeEscrow: "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e"
 } as const satisfies Record<string, Address>;
-
-/** The WETH/TSLA pool exists only in the 0.3% tier on this chain. */
-export const POOL_FEE = 3000;
-
-/**
- * Slippage budget in basis points. Must exceed the pool fee: at 0.3% the fee
- * alone would consume a third of a 1% budget and every swap would revert.
- */
-export const SLIPPAGE_BPS = 200;
 
 export interface RuntimeConfig {
   readonly rpcUrl: string;
@@ -104,7 +97,14 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
 export interface WorkerConfig extends RuntimeConfig {
   readonly keeperKey: string;
   readonly dryRun: boolean;
-  readonly conversionThreshold: bigint;
+  /**
+   * The address pons credits with creator fees — the cold admin key, not the
+   * keeper. Only the credited address may claim, so the worker can watch this
+   * balance but can never act on it.
+   */
+  readonly feeRecipient: Address;
+  /** Below this, a trip with the cold key is not worth making. */
+  readonly feeAlertThreshold: bigint;
 }
 
 /**
@@ -126,6 +126,7 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     ...base,
     keeperKey: key,
     dryRun: env.DRY_RUN !== "false",
-    conversionThreshold: BigInt(env.CONVERSION_THRESHOLD_WEI ?? "1000000000000000")
+    feeRecipient: requireAddress(env, "FEE_RECIPIENT"),
+    feeAlertThreshold: BigInt(env.FEE_ALERT_THRESHOLD ?? "10000000000000000")
   };
 }

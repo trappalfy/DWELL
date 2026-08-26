@@ -5,6 +5,13 @@ import type { Address, VaultState } from "../types.ts";
 
 const ERC20_ABI = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 
+const ESCROW_ABI = parseAbi([
+  "function balanceOf(address recipient) view returns (uint256)",
+  "function balanceOfToken(address recipient, address token) view returns (uint256)"
+]);
+
+const PONS_FACTORY_ABI = parseAbi(["function feeEscrow() view returns (address)"]);
+
 const VAULT_ABI = parseAbi([
   "function totalAllocated() view returns (uint256)",
   "function totalClaimed() view returns (uint256)",
@@ -131,6 +138,42 @@ export class ChainReader {
       functionName: "balanceOf",
       args: [account]
     }) as Promise<bigint>;
+  }
+
+  /**
+   * What pons has credited an address but not yet paid out.
+   *
+   * Fees arrive in whatever the launch is priced in — ours is priced in the
+   * reward asset, so this is the one that matters. Nothing here can move the
+   * money: only the credited address itself may claim, which is the whole
+   * reason the recipient is the cold key.
+   */
+  escrowCredit(recipient: Address, token: Address): Promise<bigint> {
+    return this.#client.readContract({
+      address: ADDRESSES.ponsFeeEscrow,
+      abi: ESCROW_ABI,
+      functionName: "balanceOfToken",
+      args: [recipient, token]
+    }) as Promise<bigint>;
+  }
+
+  /** The same, for native ETH — which we do not expect and want to hear about. */
+  escrowCreditNative(recipient: Address): Promise<bigint> {
+    return this.#client.readContract({
+      address: ADDRESSES.ponsFeeEscrow,
+      abi: ESCROW_ABI,
+      functionName: "balanceOf",
+      args: [recipient]
+    }) as Promise<bigint>;
+  }
+
+  /** The escrow the live factory itself points at — used to audit our constant. */
+  ponsFeeEscrow(): Promise<Address> {
+    return this.#client.readContract({
+      address: ADDRESSES.ponsV2Factory,
+      abi: PONS_FACTORY_ABI,
+      functionName: "feeEscrow"
+    }) as Promise<Address>;
   }
 
   ethBalance(account: Address): Promise<bigint> {

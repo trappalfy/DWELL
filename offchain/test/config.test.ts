@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 import {
   ADDRESSES,
   CHAIN_ID,
-  POOL_FEE,
-  SLIPPAGE_BPS,
   loadRuntimeConfig,
   loadWorkerConfig
 } from "../src/config.ts";
@@ -26,14 +24,6 @@ test("адреса закреплены и имеют корректный ви�
   assert.equal(ADDRESSES.tsla, "0x322F0929c4625eD5bAd873c95208D54E1c003b2d");
   assert.equal(ADDRESSES.weth, "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73");
   assert.equal(ADDRESSES.multicall3, "0xcA11bde05977b3631167028862bE2a173976CA11");
-});
-
-test("параметры свопа учитывают тир пула", () => {
-  // Пул WETH/TSLA существует только в тире 0.3%
-  assert.equal(POOL_FEE, 3000);
-  // Комиссия 0.3% съедает треть однопроцентного бюджета, поэтому лимит выше
-  assert.ok(SLIPPAGE_BPS > POOL_FEE / 100, "лимит проскальзывания не покрывает комиссию пула");
-  assert.equal(SLIPPAGE_BPS, 200);
 });
 
 test("минимальный баланс разворачивается в wei", () => {
@@ -64,7 +54,8 @@ test("порт по умолчанию задан, путь к базе обяз
 
 const WORKER_ENV = {
   ...VALID_ENV,
-  KEEPER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+  KEEPER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+  FEE_RECIPIENT: "0xef048611d7F3077b35Fab260565886186fDa32bA"
 };
 
 test("dry-run включён по умолчанию", () => {
@@ -103,14 +94,25 @@ test("отсутствующий ключ кипера отвергается", 
   assert.throws(() => loadWorkerConfig(without), /KEEPER_PRIVATE_KEY/);
 });
 
-test("порог конвертации по умолчанию около двух долларов", () => {
-  // Фонд маленький, и при пороге в $10 первые комиссии зависли бы на кипере,
-  // не дойдя до конвертации. Глубина пула это позволяет: покупка на $10
-  // съедала 0.79% WETH-стороны, на $2 — около 0.16%.
-  assert.equal(loadWorkerConfig(WORKER_ENV).conversionThreshold, 1_000_000_000_000_000n);
+test("порог тревоги о комиссиях задаётся и имеет разумное значение по умолчанию", () => {
+  // Порог отвечает на один вопрос: стоит ли поездка холодным ключом.
+  // Слишком низкий — начнём ходить ради пыли, слишком высокий — деньги
+  // будут месяцами лежать в чужом контракте.
+  assert.equal(loadWorkerConfig(WORKER_ENV).feeAlertThreshold, 10n ** 16n);
   assert.equal(
-    loadWorkerConfig({ ...WORKER_ENV, CONVERSION_THRESHOLD_WEI: "5" }).conversionThreshold,
+    loadWorkerConfig({ ...WORKER_ENV, FEE_ALERT_THRESHOLD: "5" }).feeAlertThreshold,
     5n
+  );
+});
+
+test("получатель комиссий обязателен и проверяется на вид адреса", () => {
+  // Без него воркер не узнает, за чьим начислением смотреть, и промолчит
+  // ровно тогда, когда деньги уже пришли.
+  const { FEE_RECIPIENT, ...without } = WORKER_ENV;
+  assert.throws(() => loadWorkerConfig(without), /FEE_RECIPIENT/);
+  assert.throws(
+    () => loadWorkerConfig({ ...WORKER_ENV, FEE_RECIPIENT: "не адрес" }),
+    /FEE_RECIPIENT/
   );
 });
 

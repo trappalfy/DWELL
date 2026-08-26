@@ -88,3 +88,28 @@ test("баланс произвольного токена читается по
   const untouched = "0x0d9E1100000000000000000000000000000DeEf1" as Address;
   assert.equal(await reader.tokenBalance(ADDRESSES.weth, untouched), 0n);
 });
+
+test("адрес хранилища комиссий подтверждён самой фабрикой pons", async (t) => {
+  if (!online) return t.skip("живой узел недоступен");
+
+  // The one realistic way to get this wrong is to pin an impostor: this chain
+  // is full of contracts wearing the same names. So the constant is not
+  // trusted on the strength of documentation — the live factory is asked, and
+  // its answer has to be the address we ship.
+  const declared = await reader.ponsFeeEscrow();
+
+  assert.equal(
+    declared.toLowerCase(),
+    ADDRESSES.ponsFeeEscrow.toLowerCase(),
+    "фабрика указывает на другое хранилище — константа устарела или подделана"
+  );
+});
+
+test("начисление в хранилище читается и по токену, и в нативе", async (t) => {
+  if (!online) return t.skip("живой узел недоступен");
+
+  const untouched = "0x0d9E1100000000000000000000000000000DeEf1" as Address;
+
+  assert.equal(await reader.escrowCredit(untouched, ADDRESSES.tsla), 0n);
+  assert.equal(await reader.escrowCreditNative(untouched), 0n);
+});

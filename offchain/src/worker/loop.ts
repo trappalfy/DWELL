@@ -5,6 +5,7 @@ export interface TickDeps {
   settleEpoch(epoch: number): Promise<unknown>;
   publishIfDue(): Promise<unknown>;
   checkPublishedRoot(): Promise<unknown>;
+  claimFeesIfDue(): Promise<unknown>;
   convertFeesIfDue(): Promise<unknown>;
   lastSettledEpoch(): number | null;
   alert(message: string): void;
@@ -26,7 +27,9 @@ export interface TickReport {
  *     collecting heartbeats, and settling it would underpay everyone in it;
  *  3. publish;
  *  4. run the watchdog AFTER publishing, since it checks what was sent;
- *  5. convert fees last — it is the only stage that is never urgent.
+ *  5. claim creator fees, then convert them, last and in that order — this
+ *     is the only pair of stages that is never urgent, and claiming leaves
+ *     the money in a form only converting can move.
  *
  * Each stage is isolated. One failing stage must not cancel the others, or a
  * flaky RPC during publishing would also stop fee conversion and, worse, the
@@ -62,6 +65,10 @@ export async function runWorkerTick(deps: TickDeps, nowSeconds: number): Promise
 
   await run("publish", () => deps.publishIfDue());
   await run("watchdog", () => deps.checkPublishedRoot());
+  // Claim before converting, in that order and in the same tick: claiming
+  // leaves the fees as native ETH on the keeper, and converting is what moves
+  // them into the vault. Reversed, every claim would wait a tick to matter.
+  await run("claim", () => deps.claimFeesIfDue());
   await run("convert", () => deps.convertFeesIfDue());
 
   return { settled, failures };

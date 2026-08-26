@@ -26,6 +26,23 @@ const ROUTER_ABI = parseAbi([
   "function exactInputSingle(ExactInputSingleParams params) payable returns (uint256 amountOut)"
 ]);
 
+/*
+ * The custom errors are declared alongside the function on purpose: viem can
+ * only report a revert BY NAME when its ABI carries that error, and without
+ * them collectFees would surface a bare four-byte selector that no caller
+ * could tell apart from any other revert.
+ */
+const LOCKER_ABI = parseAbi([
+  "function collectFees(address token) returns (uint256 amount0, uint256 amount1)",
+  "error NoFeesToCollect()",
+  "error NotAuthorized()",
+  "error TokenNotFound()"
+]);
+
+const WETH_ABI = parseAbi([
+  "function withdraw(uint256 amount)"
+]);
+
 const VAULT_ABI = parseAbi([
   "function publishRoot(uint64 newEpoch, bytes32 newRoot, uint256 newTotalAllocated)",
   "function pause()"
@@ -158,4 +175,70 @@ export class ChainWriter {
 
     return { txHash, amountOut: expected };
   }
+
+  /**
+   * Claims the creator fees pons owes the keeper.
+   *
+   * Returns null when the locker had nothing to pay. That case is the normal
+   * one — most ticks find an empty position — and it arrives as a revert, so
+   * it has to be told apart from a real failure rather than retried or
+   * alerted on. Everything else is rethrown untouched: NotAuthorized in
+   * particular means the fee wallet is not ours, which is a misconfiguration
+   * that must be loud.
+   */
+  async collectCreatorFees(token: Address): Promise<Hex | null> {
+    try {
+      const { request } = await this.#public.simulateContract({
+        account: this.#account,
+        address: ADDRESSES.ponsLocker,
+        abi: LOCKER_ABI,
+        functionName: "collectFees",
+        args: [token]
+      });
+      const hash = await this.#wallet.writeContract(request);
+      assertMined(await this.#public.waitForTransactionReceipt({ hash }), "collectFees", hash);
+      return hash;
+    } catch (error) {
+      if (isNoFeesToCollect(error)) return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Unwraps WETH into native ETH.
+   *
+   * The locker pays with safeTransfer, so fees land WRAPPED, while
+   * feeConverter spends the NATIVE balance. Without this step the two never
+   * meet and the fees sit on the keeper forever.
+   */
+  async unwrapWeth(amount: bigint): Promise<Hex> {
+    if (amount <= 0n) throw new RangeError("amount must be positive");
+
+    const { request } = await this.#public.simulateContract({
+      account: this.#account,
+      address: ADDRESSES.weth,
+      abi: WETH_ABI,
+      functionName: "withdraw",
+      args: [amount]
+    });
+    const hash = await this.#wallet.writeContract(request);
+    assertMined(await this.#public.waitForTransactionReceipt({ hash }), "withdraw", hash);
+    return hash;
+  }
 }
+
+/**
+ * Recognises the locker's "nothing to pay out" revert.
+ *
+ * Matched on the error's own name rather than a hand-written four-byte
+ * selector: viem surfaces the custom error by name once the ABI is known,
+ * and a mistyped constant would silently start swallowing some other revert.
+ */
+function isNoFeesToCollect(error: unknown): boolean {
+  for (let e: unknown = error; e != null; e = (e as { cause?: unknown }).cause) {
+    if ((e as { data?: { errorName?: string } }).data?.errorName === "NoFeesToCollect") return true;
+    if (String((e as { message?: string }).message ?? "").includes("NoFeesToCollect")) return true;
+  }
+  return false;
+}
+

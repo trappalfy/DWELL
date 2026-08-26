@@ -20,7 +20,14 @@ export const ADDRESSES = {
   swapRouter: "0xCaf681a66D020601342297493863E78C959E5cb2",
   v3Factory: "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
   wethTslaPool: "0xA953CA88ff430e9487c60cA34d757414f4efdA07",
-  multicall3: "0xcA11bde05977b3631167028862bE2a173976CA11"
+  multicall3: "0xcA11bde05977b3631167028862bE2a173976CA11",
+  /*
+   * PonsLaunchLocker: holds our pool position and pays out creator fees.
+   * Verified against the chain, not the docs — its factory() returns the
+   * address pons documents as the active factory, and impostor contracts
+   * carrying the same name exist here.
+   */
+  ponsLocker: "0x736D76699C26D0d966744cAe304C000d471f7F35"
 } as const satisfies Record<string, Address>;
 
 /** The WETH/TSLA pool exists only in the 0.3% tier on this chain. */

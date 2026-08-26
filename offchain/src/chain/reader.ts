@@ -117,6 +117,22 @@ export class ChainReader {
     }) as Promise<bigint>;
   }
 
+  /**
+   * Reads any ERC20 balance, not just the project token.
+   *
+   * Creator fees arrive as WETH, which is neither what miners are weighed by
+   * nor what they are paid in, so the token has to be named at the call site
+   * rather than baked into the reader.
+   */
+  tokenBalance(token: Address, account: Address): Promise<bigint> {
+    return this.#client.readContract({
+      address: token,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [account]
+    }) as Promise<bigint>;
+  }
+
   ethBalance(account: Address): Promise<bigint> {
     return this.#client.getBalance({ address: account });
   }

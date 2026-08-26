@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test --test-concurrency=1",
     "typecheck": "tsc --noEmit",
     "fixture": "node scripts/generate-merkle-fixture.ts",
     "dev": "node scripts/dev-server.ts",

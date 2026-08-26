@@ -71,3 +71,20 @@ test("состояние вольта читается тремя полями",
   assert.equal(typeof state.totalClaimed, "bigint");
   assert.ok(state.totalAllocated >= state.totalClaimed, "начислено не меньше заклеймленного");
 });
+
+test("баланс произвольного токена читается по адресу токена, а не по проектному", async (t) => {
+  if (!online) return t.skip("живой узел недоступен");
+
+  // The pool holds both sides, so one address gives a non-zero reading for a
+  // token the reader was NOT constructed with — which is the whole point:
+  // the WETH arriving as creator fees is not the token miners are weighed by.
+  const weth = await reader.tokenBalance(ADDRESSES.weth, POOL);
+  const tsla = await reader.tokenBalance(ADDRESSES.tsla, POOL);
+
+  assert.ok(weth > 0n, "в пуле обязан лежать WETH");
+  assert.ok(tsla > 0n, "и TSLA тоже");
+  // Not EMPTY: 0x..01 turns out to hold 0.05 WETH on this chain, and 0x..dEaD
+  // holds more. An address is only empty if the chain says so.
+  const untouched = "0x0d9E1100000000000000000000000000000DeEf1" as Address;
+  assert.equal(await reader.tokenBalance(ADDRESSES.weth, untouched), 0n);
+});

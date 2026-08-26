@@ -12,6 +12,7 @@ import { settleEpoch } from "./worker/settleJob.ts";
 import { publishIfDue } from "./worker/publisher.ts";
 import { checkPublishedRoot } from "./worker/watchdog.ts";
 import { convertFeesIfDue } from "./worker/feeConverter.ts";
+import { claimFeesIfDue } from "./worker/feeClaim.ts";
 import { startWorker } from "./worker/loop.ts";
 import { startServer } from "./server.ts";
 import { findBackdrop } from "./backdrop.ts";
@@ -97,6 +98,13 @@ const worker = startWorker(
         reader,
         writer,
         alert
+      }),
+    claimFeesIfDue: () =>
+      claimFeesIfDue({
+        projectToken: config.projectToken,
+        reader,
+        writer,
+        dryRun: config.dryRun
       }),
     convertFeesIfDue: () =>
       convertFeesIfDue({

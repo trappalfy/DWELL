@@ -30,6 +30,10 @@ function fixture(overrides: Partial<TickDeps> = {}) {
         calls.push("watchdog");
         return { ok: true, checked: 0 };
       },
+      claimFeesIfDue: async () => {
+        calls.push("claim");
+        return { claimed: false, reason: "x" };
+      },
       convertFeesIfDue: async () => {
         calls.push("convert");
         return { converted: false, reason: "x" };
@@ -97,4 +101,31 @@ test("нечего догонять — эпохи не считаются", asy
   const { deps, calls } = fixture({ lastSettledEpoch: () => CURRENT_EPOCH - 1 });
   await runWorkerTick(deps, NOW_SECONDS);
   assert.equal(calls.filter((c) => c.startsWith("settle:")).length, 0);
+});
+
+test("комиссии сначала забираются, и только потом конвертируются", async () => {
+  const { deps, calls } = fixture();
+
+  await runWorkerTick(deps, NOW_SECONDS);
+
+  const claim = calls.indexOf("claim");
+  const convert = calls.indexOf("convert");
+  assert.ok(claim >= 0, "сбор комиссий обязан происходить каждый тик");
+  assert.ok(
+    claim < convert,
+    "иначе развёрнутый ETH пролежал бы до следующего тика вместо того, чтобы уехать в вольт"
+  );
+});
+
+test("провал сбора комиссий не отменяет конвертацию", async () => {
+  const { deps, calls } = fixture({
+    claimFeesIfDue: async () => {
+      throw new Error("локер недоступен");
+    }
+  });
+
+  const report = await runWorkerTick(deps, NOW_SECONDS);
+
+  assert.ok(report.failures.some((f) => f.includes("claim")), "провал обязан попасть в отчёт");
+  assert.ok(calls.includes("convert"), "остаток на кипере всё ещё можно обменять");
 });
